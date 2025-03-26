@@ -1,13 +1,13 @@
 export type JqlSearchRequest = {
   advanced: boolean,
-  search: "",
-  project: "MC" | "MCPE" | "REALMS" | "MCL" | "BDS" | "WEB",
+  filter: "open" | "all" | "done",
   isForge: boolean,
-  sortField: "created" | "updated" | "priority" | "status",
-  sortAsc: boolean,
-  filter: "open",
   startAt: number,
   maxResults: number,
+  project: "MC" | "MCPE" | "REALMS" | "MCL" | "BDS" | "WEB",
+  search: "",
+  sortAsc: boolean,
+  sortField: "created" | "updated" | "priority" | "status",
   workspaceId: "",
 }
 

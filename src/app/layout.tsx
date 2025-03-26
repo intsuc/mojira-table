@@ -13,7 +13,7 @@ export default function Layout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="antialiased">
+      <body className="antialiased h-screen overflow-hidden">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
