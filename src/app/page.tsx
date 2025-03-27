@@ -2,7 +2,9 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { filters, jqlSearchPost, projects, sortFields, type JqlSearchRequest } from "@/lib/api"
 import { ArrowDown01, ArrowDown10, Loader2 } from "lucide-react"
 import { useState } from "react"
@@ -15,12 +17,13 @@ export default function Page() {
   const [filter, setFilter] = useState<JqlSearchRequest["filter"]>("all")
   const [sortField, setSortField] = useState<JqlSearchRequest["sortField"]>("created")
   const [sortAsc, setSortAsc] = useState<JqlSearchRequest["sortAsc"]>(false)
+  const [advanced, setAdvanced] = useState<JqlSearchRequest["advanced"]>(false)
   const [search, setSearch] = useState<JqlSearchRequest["search"]>("")
 
   const { data, error, isLoading, isValidating, size, setSize } = useSWRInfinite(
     (pageIndex) => {
       if (project === undefined) { return null }
-      return [pageIndex + 1, project, filter, sortField, sortAsc, search]
+      return [pageIndex + 1, project, filter, sortField, sortAsc, advanced, search]
     },
     ([
       page,
@@ -28,6 +31,7 @@ export default function Page() {
       filter,
       sortField,
       sortAsc,
+      advanced,
       search,
     ]: [
         page: number,
@@ -35,13 +39,14 @@ export default function Page() {
         filter: JqlSearchRequest["filter"],
         sortField: JqlSearchRequest["sortField"],
         sortAsc: JqlSearchRequest["sortAsc"],
+        advanced: JqlSearchRequest["advanced"],
         search: JqlSearchRequest["search"],
       ]) => jqlSearchPost({
         project,
         filter,
         sortField,
         sortAsc,
-        advanced: false,
+        advanced,
         search,
         startAt: (page - 1) * maxResults,
         maxResults,
@@ -85,7 +90,7 @@ export default function Page() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="sticky top-0 flex flex-row bg-white">
+      <div className="p-2 sticky top-0 flex flex-row gap-2 bg-white shadow-sm">
         <EnumSelect label="Project" value={project} onValueChange={setProject} values={projects} />
         <EnumSelect label="Filter" value={filter} onValueChange={setFilter} values={filters} />
         <EnumSelect label="Sort field" value={sortField} onValueChange={setSortField} values={sortFields} />
@@ -96,6 +101,10 @@ export default function Page() {
             <ArrowDown10 />
           )}
         </Button>
+        <div className="flex items-center space-x-2">
+          <Switch id="advanced" checked={advanced} onCheckedChange={setAdvanced} />
+          <Label htmlFor="advanced">Advanced</Label>
+        </div>
         <Input
           placeholder="Search"
           onBlur={(e) => setSearch(e.currentTarget.value)}
