@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { filters, jqlSearchPost, projects, sortFields, type JqlSearchRequest } from "@/lib/api"
@@ -60,37 +61,9 @@ export default function Page() {
   const isReachingEnd = isEmpty || (data?.[data.length - 1] && data[data.length - 1]!.issues.length < maxResults)
   const isRefreshing = isValidating && data && data.length === size
 
-  function EnumSelect<T extends { id: string, label: string }>({
-    label,
-    value,
-    onValueChange,
-    values,
-  }: {
-    label: string,
-    value: T["id"] | undefined,
-    onValueChange: (value: T["id"]) => void,
-    values: readonly T[],
-  }) {
-    return (
-      <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder={label} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectLabel>{label}</SelectLabel>
-            {values.map((item) => (
-              <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    )
-  }
-
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-2 sticky top-0 flex flex-row gap-2 bg-white shadow-sm">
+    <div className="h-full flex flex-col">
+      <div className="col-span-2 p-2 flex flex-row gap-2 bg-white border-b">
         <EnumSelect label="Project" value={project} onValueChange={setProject} values={projects} />
         <EnumSelect label="Filter" value={filter} onValueChange={setFilter} values={filters} />
         <EnumSelect label="Sort field" value={sortField} onValueChange={setSortField} values={sortFields} />
@@ -123,20 +96,57 @@ export default function Page() {
         />
       </div>
 
-      {!isLoading && isEmpty ? <p>No issues found.</p> : null}
-      {issues.map((issue) => (
-        <div key={issue.key} className="grid grid-cols-[auto_1fr] gap-2">
-          <div>{issue.key}</div>
-          <div className="truncate">{issue.fields.summary}</div>
-        </div>
-      ))}
-      <Button
-        variant="ghost"
-        disabled={isLoadingMore || isReachingEnd}
-        onClick={() => setSize(size + 1)}
-      >
-        {isLoadingMore ? <><Loader2 className="animate-spin" />Loading...</> : isReachingEnd ? "No more issues" : "Load more"}
-      </Button>
+      <ResizablePanelGroup direction="horizontal">
+        <ResizablePanel defaultSize={20} className="overflow-y-hidden">
+          <div className="h-full overflow-y-scroll [scrollbar-width:thin]">
+            {!isLoading && isEmpty ? <p>No issues found.</p> : null}
+            {issues.map((issue) => (
+              <div key={issue.key} className="grid grid-cols-[auto_1fr] gap-2">
+                <div>{issue.key}</div>
+                <div className="truncate">{issue.fields.summary}</div>
+              </div>
+            ))}
+            <Button
+              variant="ghost"
+              disabled={isLoadingMore || isReachingEnd}
+              onClick={() => setSize(size + 1)}
+            >
+              {isLoadingMore ? <><Loader2 className="animate-spin" />Loading...</> : isReachingEnd ? "No more issues" : "Load more"}
+            </Button>
+          </div>
+        </ResizablePanel>
+        <ResizableHandle />
+        <ResizablePanel>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
+  )
+}
+
+function EnumSelect<T extends { id: string, label: string }>({
+  label,
+  value,
+  onValueChange,
+  values,
+}: {
+  label: string,
+  value: T["id"] | undefined,
+  onValueChange: (value: T["id"]) => void,
+  values: readonly T[],
+}) {
+  return (
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger className="w-[180px]">
+        <SelectValue placeholder={label} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          <SelectLabel>{label}</SelectLabel>
+          {values.map((item) => (
+            <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>
+          ))}
+        </SelectGroup>
+      </SelectContent>
+    </Select>
   )
 }
