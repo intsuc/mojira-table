@@ -1,132 +1,100 @@
 "use client"
 
-import { useEffect, useState, useTransition, type Dispatch, type SetStateAction } from "react"
-import { jqlSearchPost, type JqlSearchResponse } from "@/lib/api"
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { filters, jqlSearchPost, projects, sortFields, type JqlSearchRequest } from "@/lib/api"
 import { Loader2 } from "lucide-react"
+import { useState } from "react"
+import useSWRInfinite from "swr/infinite"
 
 const maxResults = 25
 
 export default function Page() {
-  const [page, setPage] = useState<number>(1)
-  const [isPending, startTransition] = useTransition()
-  const [response, setResponse] = useState<JqlSearchResponse | undefined>(undefined)
-  const lastPage = response?.total ? Math.ceil(response.total / maxResults) : undefined
+  const [project, setProject] = useState<JqlSearchRequest["project"] | undefined>(undefined)
+  const [filter, setFilter] = useState<JqlSearchRequest["filter"]>("all")
+  const [sortField, setSortField] = useState<JqlSearchRequest["sortField"]>("created")
 
-  useEffect(() => {
-    startTransition(async () => {
-      const response = await jqlSearchPost({
+  const { data, error, isLoading, isValidating, size, setSize } = useSWRInfinite(
+    (pageIndex) => {
+      if (project === undefined) { return null }
+      return [pageIndex + 1, project, filter, sortField]
+    },
+    ([
+      page,
+      project,
+      filter,
+      sortField,
+    ]: [
+        page: number,
+        project: JqlSearchRequest["project"],
+        filter: JqlSearchRequest["filter"],
+        sortField: JqlSearchRequest["sortField"],
+      ]) => jqlSearchPost({
+        project: project!,
+        filter: filter,
+        sortField: sortField,
+        sortAsc: false,
         advanced: false,
         search: "",
-        project: "MC",
-        isForge: false,
-        sortField: "created",
-        sortAsc: false,
-        filter: "open",
         startAt: (page - 1) * maxResults,
         maxResults,
+        isForge: false,
         workspaceId: "",
-      })
-      startTransition(() => {
-        setResponse(response)
-      })
-    })
-  }, [page])
-
-  return (
-    <div className="h-full grid grid-rows-[auto_fit-content(0)]">
-      <div className="overflow-y-auto">
-        {isPending ? (
-          <div className="h-full grid place-items-center">
-            <Loader2 className="animate-spin" />
-          </div>
-        ) : response?.issues.map((issue) => (
-          <div key={issue.key} className="grid grid-cols-[auto_1fr] gap-2">
-            <div>{issue.key}</div>
-            <div className="truncate">{issue.fields.summary}</div>
-          </div>
-        ))}
-      </div>
-
-      <IssuesPagination
-        page={page}
-        onPageChange={setPage}
-        lastPage={lastPage}
-      />
-    </div>
+      }),
   )
-}
+  const issues = data?.flatMap((page) => page.issues) ?? []
+  const isLoadingMore = isLoading || (size > 0 && data && typeof data[size - 1] === "undefined")
+  const isEmpty = data?.[0] ? data[0].issues.length === 0 : true
+  const isReachingEnd = isEmpty || (data?.[data.length - 1] && data[data.length - 1]!.issues.length < maxResults)
+  const isRefreshing = isValidating && data && data.length === size
 
-function IssuesPagination({
-  page,
-  onPageChange,
-  lastPage,
-}: {
-  page: number,
-  onPageChange: Dispatch<SetStateAction<number>>,
-  lastPage: number | undefined,
-}) {
-  function Page({
-    page,
-    isActive,
+  function EnumSelect<T extends string>({
+    placeholder,
+    value,
+    onValueChange,
+    values,
   }: {
-    page: number | undefined,
-    isActive?: boolean,
+    placeholder?: string,
+    value: T | undefined,
+    onValueChange: (value: T) => void,
+    values: readonly T[],
   }) {
     return (
-      <PaginationItem>
-        <PaginationLink isActive={isActive} onClick={() => {
-          if (page !== undefined) {
-            onPageChange(page)
-          }
-        }}>
-          {page === undefined ? (
-            <Loader2 className="animate-spin" />
-          ) : page}
-        </PaginationLink>
-      </PaginationItem>
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {values.map((item) => (
+            <SelectItem key={item} value={item}>{item}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     )
   }
 
   return (
-    <Pagination>
-      <PaginationContent>
-        <PaginationItem>
-          <PaginationPrevious onClick={() => {
-            if (page > 1) {
-              onPageChange((prev) => prev - 1)
-            }
-          }} />
-        </PaginationItem>
+    <div className="h-full overflow-y-auto">
+      <div className="flex flex-row">
+        <EnumSelect placeholder="Select a project" value={project} onValueChange={setProject} values={projects} />
+        <EnumSelect value={filter} onValueChange={setFilter} values={filters} />
+        <EnumSelect value={sortField} onValueChange={setSortField} values={sortFields} />
+      </div>
 
-        {page > 1 ? (
-          <Page page={1} />
-        ) : null}
-        {page > 2 ? (
-          <PaginationItem>
-            <PaginationEllipsis />
-          </PaginationItem>
-        ) : null}
-
-        <Page page={page} isActive />
-
-        {lastPage === undefined || page < lastPage - 1 ? (
-          <PaginationItem>
-            <PaginationEllipsis />
-          </PaginationItem>
-        ) : null}
-        {lastPage === undefined || page < lastPage ? (
-          <Page page={lastPage} />
-        ) : null}
-
-        <PaginationItem>
-          <PaginationNext onClick={() => {
-            if (lastPage !== undefined && page < lastPage) {
-              onPageChange((prev) => prev + 1)
-            }
-          }} />
-        </PaginationItem>
-      </PaginationContent>
-    </Pagination>
+      {!isLoading && isEmpty ? <p>No issues found.</p> : null}
+      {issues.map((issue) => (
+        <div key={issue.key} className="grid grid-cols-[auto_1fr] gap-2">
+          <div>{issue.key}</div>
+          <div className="truncate">{issue.fields.summary}</div>
+        </div>
+      ))}
+      <Button
+        variant="ghost"
+        disabled={isLoadingMore || isReachingEnd}
+        onClick={() => setSize(size + 1)}
+      >
+        {isLoadingMore ? <><Loader2 className="animate-spin" />Loading...</> : isReachingEnd ? "No more issues" : "Load more"}
+      </Button>
+    </div>
   )
 }

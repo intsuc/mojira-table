@@ -1,13 +1,35 @@
+export const projects = [
+  "MC",
+  "MCPE",
+  "REALMS",
+  "MCL",
+  "BDS",
+  "WEB",
+] as const
+
+export const filters = [
+  "open",
+  "all",
+  "done",
+] as const
+
+export const sortFields = [
+  "created",
+  "updated",
+  "priority",
+  "status",
+] as const
+
 export type JqlSearchRequest = {
+  project: typeof projects[number],
+  filter: typeof filters[number],
+  sortField: typeof sortFields[number],
+  sortAsc: boolean,
   advanced: boolean,
-  filter: "open" | "all" | "done",
-  isForge: boolean,
+  search: string,
   startAt: number,
   maxResults: number,
-  project: "MC" | "MCPE" | "REALMS" | "MCL" | "BDS" | "WEB",
-  search: "",
-  sortAsc: boolean,
-  sortField: "created" | "updated" | "priority" | "status",
+  isForge: boolean,
   workspaceId: "",
 }
 
@@ -95,10 +117,10 @@ export type JqlSearchResponse = {
   names: Record<string, string>,
 }
 
-const JqlSearchPost = "https://bugs.mojang.com/api/jql-search-post"
+const jqlSearchPostUrl = "https://bugs.mojang.com/api/jql-search-post"
 
 export async function jqlSearchPost(request: JqlSearchRequest): Promise<JqlSearchResponse> {
-  const response = await fetch(JqlSearchPost, {
+  const response = await fetch(jqlSearchPostUrl, {
     method: "POST",
     headers: {
       "Accept": "application/json",
