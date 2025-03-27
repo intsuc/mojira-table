@@ -21,7 +21,7 @@ export default function Page() {
   const [advanced, setAdvanced] = useState<JqlSearchRequest["advanced"]>(false)
   const [search, setSearch] = useState<JqlSearchRequest["search"]>("")
 
-  const { data, error, isLoading, isValidating, size, setSize } = useSWRInfinite(
+  const { data, isLoading, size, setSize } = useSWRInfinite(
     (pageIndex) => {
       if (project === undefined) { return null }
       return [pageIndex + 1, project, filter, sortField, sortAsc, advanced, search]
@@ -59,7 +59,6 @@ export default function Page() {
   const isLoadingMore = isLoading || (size > 0 && data && typeof data[size - 1] === "undefined")
   const isEmpty = data?.[0] ? data[0].issues.length === 0 : true
   const isReachingEnd = isEmpty || (data?.[data.length - 1] && data[data.length - 1]!.issues.length < maxResults)
-  const isRefreshing = isValidating && data && data.length === size
 
   return (
     <div className="h-full flex flex-col">
