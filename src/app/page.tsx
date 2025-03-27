@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { filters, jqlSearchPost, projects, sortFields, type JqlSearchRequest } from "@/lib/api"
 import { ArrowDown01, ArrowDown10, Loader2 } from "lucide-react"
 import { useState } from "react"
@@ -90,22 +89,13 @@ export default function Page() {
         <EnumSelect label="Project" value={project} onValueChange={setProject} values={projects} />
         <EnumSelect label="Filter" value={filter} onValueChange={setFilter} values={filters} />
         <EnumSelect label="Sort field" value={sortField} onValueChange={setSortField} values={sortFields} />
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" onClick={() => setSortAsc((prev) => !prev)}>
-                {sortAsc ? (
-                  <ArrowDown01 />
-                ) : (
-                  <ArrowDown10 />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Sort</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button variant="outline" size="icon" onClick={() => setSortAsc((prev) => !prev)}>
+          {sortAsc ? (
+            <ArrowDown01 />
+          ) : (
+            <ArrowDown10 />
+          )}
+        </Button>
         <Input
           placeholder="Search"
           onBlur={(e) => setSearch(e.currentTarget.value)}
