@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { filters, jqlSearchPost, projects, sortFields, type JqlSearchRequest } from "@/lib/api"
 import { ArrowDown01, ArrowDown10, Loader2 } from "lucide-react"
@@ -53,12 +53,12 @@ export default function Page() {
   const isRefreshing = isValidating && data && data.length === size
 
   function EnumSelect<T extends string>({
-    placeholder,
+    label,
     value,
     onValueChange,
     values,
   }: {
-    placeholder?: string,
+    label: string,
     value: T | undefined,
     onValueChange: (value: T) => void,
     values: readonly T[],
@@ -66,12 +66,15 @@ export default function Page() {
     return (
       <Select value={value} onValueChange={onValueChange}>
         <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={label} />
         </SelectTrigger>
         <SelectContent>
-          {values.map((item) => (
-            <SelectItem key={item} value={item}>{item}</SelectItem>
-          ))}
+          <SelectGroup>
+            <SelectLabel>{label}</SelectLabel>
+            {values.map((item) => (
+              <SelectItem key={item} value={item}>{item}</SelectItem>
+            ))}
+          </SelectGroup>
         </SelectContent>
       </Select>
     )
@@ -80,9 +83,9 @@ export default function Page() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="sticky top-0 flex flex-row bg-white">
-        <EnumSelect placeholder="Select a project" value={project} onValueChange={setProject} values={projects} />
-        <EnumSelect value={filter} onValueChange={setFilter} values={filters} />
-        <EnumSelect value={sortField} onValueChange={setSortField} values={sortFields} />
+        <EnumSelect label="Project" value={project} onValueChange={setProject} values={projects} />
+        <EnumSelect label="Filter" value={filter} onValueChange={setFilter} values={filters} />
+        <EnumSelect label="Sort field" value={sortField} onValueChange={setSortField} values={sortFields} />
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -95,7 +98,7 @@ export default function Page() {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Sorting</p>
+              <p>Sort</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
