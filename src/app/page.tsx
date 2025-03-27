@@ -2,16 +2,17 @@
 
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { useLanguageDetector } from "@/hooks/use-language-detector"
 import { filters, jqlSearchPost, projects, sortFields, type Content, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
+import { createLanguageDetector } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { useInfiniteQuery } from "@tanstack/react-query"
-import { ArrowDown01, ArrowDown10, Loader2 } from "lucide-react"
+import { ArrowDown01, ArrowDown10, Loader2, Menu } from "lucide-react"
 import { useState } from "react"
 
 const maxResults = 25
@@ -22,7 +23,7 @@ type IssuesWithConfidence = (
 )[]
 
 export default function Page() {
-  const languageDetector = useLanguageDetector()
+  const [hideNonEnglishIssues, setHideNonEnglishIssues] = useState(false)
 
   const [project, setProject] = useState<JqlSearchRequest["project"] | undefined>(undefined)
   const [filter, setFilter] = useState<JqlSearchRequest["filter"]>("all")
@@ -32,7 +33,7 @@ export default function Page() {
   const [search, setSearch] = useState<JqlSearchRequest["search"]>("")
 
   const { data, fetchNextPage, hasNextPage, isFetching } = useInfiniteQuery({
-    queryKey: [project, filter, sortField, sortAsc, advanced, search],
+    queryKey: [project, filter, sortField, sortAsc, advanced, search, hideNonEnglishIssues],
     queryFn: async ({ pageParam, signal }): Promise<IssuesWithConfidence> => {
       const response = await jqlSearchPost({
         project: project!,
@@ -47,16 +48,19 @@ export default function Page() {
         workspaceId: "",
       }, signal)
       const issues = response.issues as IssuesWithConfidence
-      if (languageDetector !== undefined) {
-        await Promise.all(issues.map(async (issue) => {
-          const results = await languageDetector.detect(issue.fields.summary)
-          for (const result of results) {
-            if (result.detectedLanguage === "en") {
-              issue.enConfidence = result.confidence
-              break
+      if (hideNonEnglishIssues) {
+        const languageDetector = await createLanguageDetector()
+        if (languageDetector !== undefined) {
+          await Promise.all(issues.map(async (issue) => {
+            const results = await languageDetector.detect(issue.fields.summary)
+            for (const { detectedLanguage, confidence } of results) {
+              if (detectedLanguage === "en") {
+                issue.enConfidence = confidence
+                break
+              }
             }
-          }
-        }))
+          }))
+        }
       }
       return issues
     },
@@ -101,6 +105,21 @@ export default function Page() {
             }
           }}
         />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon">
+              <Menu />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56">
+            <DropdownMenuCheckboxItem
+              checked={hideNonEnglishIssues}
+              onCheckedChange={setHideNonEnglishIssues}
+            >
+              Hide non-English issues
+            </DropdownMenuCheckboxItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <ThemeToggle />
       </div>
 
@@ -110,7 +129,11 @@ export default function Page() {
             {issues.map((issue) => (
               <div
                 key={issue.key}
-                className={cn("p-2 grid grid-cols-[auto_1fr] gap-2 text-sm hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50", activeIssue?.key === issue.key && "bg-accent dark:bg-accent/50")}
+                className={cn(
+                  "p-2 grid grid-cols-[auto_1fr] gap-2 text-sm hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+                  activeIssue?.key === issue.key && "bg-accent dark:bg-accent/50",
+                  hideNonEnglishIssues && issue.enConfidence !== undefined && issue.enConfidence < 0.5 && "text-muted-foreground hover:text-muted-foreground bg-muted hover:bg-muted",
+                )}
                 onClick={() => setActiveIssue(issue)}
               >
                 <div>{issue.key}</div>
