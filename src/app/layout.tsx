@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import QueryProvider from "./query-provider"
+import QueryProvider from "@/components/query-provider"
 import type { ReactNode } from "react"
 
 export const metadata: Metadata = {
