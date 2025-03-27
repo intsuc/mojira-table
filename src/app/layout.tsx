@@ -14,8 +14,8 @@ export default function Layout({
   children: ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="antialiased h-screen overflow-hidden">
+    <html lang="en" suppressHydrationWarning className="h-full">
+      <body className="antialiased h-full overflow-hidden">
         <QueryProvider>
           <ThemeProvider
             attribute="class"
