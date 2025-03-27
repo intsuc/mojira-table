@@ -87,7 +87,7 @@ export default function Page() {
             {issues.map((issue) => (
               <div
                 key={issue.key}
-                className={cn("p-2 grid grid-cols-[auto_1fr] gap-2 hover:bg-zinc-50 transition-colors", activeIssue?.key === issue.key && "bg-zinc-100")}
+                className={cn("p-2 grid grid-cols-[auto_1fr] gap-2 hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50", activeIssue?.key === issue.key && "bg-accent dark:bg-accent/50")}
                 onClick={() => setActiveIssue(issue)}
               >
                 <div>{issue.key}</div>
