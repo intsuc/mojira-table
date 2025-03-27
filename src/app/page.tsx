@@ -107,7 +107,7 @@ export default function Page() {
         <ResizablePanel className="overflow-y-hidden">
           {activeIssue ? (
             <div className="h-full overflow-y-scroll [scrollbar-width:thin]">
-              <div className="mx-auto prose prose-zinc">
+              <div className="mx-auto prose prose-zinc dark:prose-invert">
                 <Content content={activeIssue.fields.description} />
               </div>
             </div>
