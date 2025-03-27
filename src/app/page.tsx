@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { useLanguageDetector } from "@/hooks/use-language-detector"
 import { filters, jqlSearchPost, projects, sortFields, type Content, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { useInfiniteQuery } from "@tanstack/react-query"
@@ -15,7 +16,14 @@ import { useState } from "react"
 
 const maxResults = 25
 
+type IssuesWithConfidence = (
+  & JqlSearchResponse["issues"][number]
+  & { enConfidence: number | undefined }
+)[]
+
 export default function Page() {
+  const languageDetector = useLanguageDetector()
+
   const [project, setProject] = useState<JqlSearchRequest["project"] | undefined>(undefined)
   const [filter, setFilter] = useState<JqlSearchRequest["filter"]>("all")
   const [sortField, setSortField] = useState<JqlSearchRequest["sortField"]>("created")
@@ -25,23 +33,38 @@ export default function Page() {
 
   const { data, fetchNextPage, hasNextPage, isFetching } = useInfiniteQuery({
     queryKey: [project, filter, sortField, sortAsc, advanced, search],
-    queryFn: async ({ pageParam, signal }) => jqlSearchPost({
-      project: project!,
-      filter,
-      sortField,
-      sortAsc,
-      advanced,
-      search,
-      startAt: pageParam * maxResults,
-      maxResults,
-      isForge: false,
-      workspaceId: "",
-    }, signal),
+    queryFn: async ({ pageParam, signal }): Promise<IssuesWithConfidence> => {
+      const response = await jqlSearchPost({
+        project: project!,
+        filter,
+        sortField,
+        sortAsc,
+        advanced,
+        search,
+        startAt: pageParam * maxResults,
+        maxResults,
+        isForge: false,
+        workspaceId: "",
+      }, signal)
+      const issues = response.issues as IssuesWithConfidence
+      if (languageDetector !== undefined) {
+        await Promise.all(issues.map(async (issue) => {
+          const results = await languageDetector.detect(issue.fields.summary)
+          for (const result of results) {
+            if (result.detectedLanguage === "en") {
+              issue.enConfidence = result.confidence
+              break
+            }
+          }
+        }))
+      }
+      return issues
+    },
     initialPageParam: 0,
     getNextPageParam: (_lastPage, _allPages, lastPageParam) => lastPageParam + 1,
     enabled: project !== undefined,
   })
-  const issues = data?.pages.flatMap((page) => page.issues) ?? []
+  const issues = data?.pages.flatMap((page) => page) ?? []
 
   const [activeIssue, setActiveIssue] = useState<JqlSearchResponse["issues"][number] | undefined>(undefined)
 
@@ -87,11 +110,11 @@ export default function Page() {
             {issues.map((issue) => (
               <div
                 key={issue.key}
-                className={cn("p-2 grid grid-cols-[auto_1fr] gap-2 hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50", activeIssue?.key === issue.key && "bg-accent dark:bg-accent/50")}
+                className={cn("p-2 grid grid-cols-[auto_1fr] gap-2 text-sm hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50", activeIssue?.key === issue.key && "bg-accent dark:bg-accent/50")}
                 onClick={() => setActiveIssue(issue)}
               >
                 <div>{issue.key}</div>
-                <div className="truncate">{issue.fields.summary}</div>
+                <div className="truncate">{issue.fields.summary} ({issue.enConfidence?.toFixed(2)})</div>
               </div>
             ))}
             <Button
