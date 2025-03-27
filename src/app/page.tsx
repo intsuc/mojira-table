@@ -75,7 +75,7 @@ export default function Page() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="flex flex-row">
+      <div className="sticky top-0 flex flex-row bg-white">
         <EnumSelect placeholder="Select a project" value={project} onValueChange={setProject} values={projects} />
         <EnumSelect value={filter} onValueChange={setFilter} values={filters} />
         <EnumSelect value={sortField} onValueChange={setSortField} values={sortFields} />
