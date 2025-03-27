@@ -9,9 +9,9 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Switch } from "@/components/ui/switch"
 import { filters, jqlSearchPost, projects, sortFields, type Content, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { useInfiniteQuery } from "@tanstack/react-query"
 import { ArrowDown01, ArrowDown10, Loader2 } from "lucide-react"
 import { useState } from "react"
-import useSWRInfinite from "swr/infinite"
 
 const maxResults = 25
 
@@ -23,44 +23,25 @@ export default function Page() {
   const [advanced, setAdvanced] = useState<JqlSearchRequest["advanced"]>(false)
   const [search, setSearch] = useState<JqlSearchRequest["search"]>("")
 
-  const { data, isLoading, size, setSize } = useSWRInfinite(
-    (pageIndex) => {
-      if (project === undefined) { return null }
-      return [pageIndex + 1, project, filter, sortField, sortAsc, advanced, search]
-    },
-    ([
-      page,
-      project,
+  const { data, fetchNextPage, hasNextPage, isFetching } = useInfiniteQuery({
+    queryKey: [project, filter, sortField, sortAsc, advanced, search],
+    queryFn: async ({ pageParam, signal }) => jqlSearchPost({
+      project: project!,
       filter,
       sortField,
       sortAsc,
       advanced,
       search,
-    ]: [
-        page: number,
-        project: JqlSearchRequest["project"],
-        filter: JqlSearchRequest["filter"],
-        sortField: JqlSearchRequest["sortField"],
-        sortAsc: JqlSearchRequest["sortAsc"],
-        advanced: JqlSearchRequest["advanced"],
-        search: JqlSearchRequest["search"],
-      ]) => jqlSearchPost({
-        project,
-        filter,
-        sortField,
-        sortAsc,
-        advanced,
-        search,
-        startAt: (page - 1) * maxResults,
-        maxResults,
-        isForge: false,
-        workspaceId: "",
-      }),
-  )
-  const issues = data?.flatMap((page) => page.issues) ?? []
-  const isLoadingMore = isLoading || (size > 0 && data && typeof data[size - 1] === "undefined")
-  const isEmpty = data?.[0] ? data[0].issues.length === 0 : true
-  const isReachingEnd = isEmpty || (data?.[data.length - 1] && data[data.length - 1]!.issues.length < maxResults)
+      startAt: pageParam * maxResults,
+      maxResults,
+      isForge: false,
+      workspaceId: "",
+    }, signal),
+    initialPageParam: 0,
+    getNextPageParam: (_lastPage, _allPages, lastPageParam) => lastPageParam + 1,
+    enabled: project !== undefined,
+  })
+  const issues = data?.pages.flatMap((page) => page.issues) ?? []
 
   const [activeIssue, setActiveIssue] = useState<JqlSearchResponse["issues"][number] | undefined>(undefined)
 
@@ -115,10 +96,10 @@ export default function Page() {
             ))}
             <Button
               variant="ghost"
-              disabled={isLoadingMore || isReachingEnd}
-              onClick={() => setSize(size + 1)}
+              disabled={isFetching || !hasNextPage}
+              onClick={() => void fetchNextPage()}
             >
-              {isLoadingMore ? <><Loader2 className="animate-spin" />Loading...</> : isReachingEnd ? "No more issues" : "Load more"}
+              {isFetching ? <><Loader2 className="animate-spin" />Loading...</> : hasNextPage ? "Load more" : "No more issues"}
             </Button>
           </div>
         </ResizablePanel>
