@@ -166,9 +166,9 @@ export default function Page() {
               <div className="grid grid-cols-[10rem_auto] *:py-2 *:border-b">
                 <div>Created</div> <div>{new Date(activeIssue.fields.created).toLocaleString()}</div>
                 <div>Custom Field 10047</div> <div>{activeIssue.fields.customfield_10047 ? new Date(activeIssue.fields.customfield_10047).toLocaleString() : null}</div>
-                <div>Custom Field 10048</div> <div>{activeIssue.fields.customfield_10048}</div>
+                <div>Game Mode</div> <div>{activeIssue.fields.customfield_10048?.value}</div>
                 <div>Mojang Priority</div> <div>{activeIssue.fields.customfield_10049?.value}</div>
-                <div>Custom Field 10050</div> <div>{activeIssue.fields.customfield_10050}</div>
+                <div>ADO</div> <div>{activeIssue.fields.customfield_10050}</div>
                 <div>Area</div> <div>{activeIssue.fields.customfield_10051?.value}</div>
                 <div>Confirmation Status</div> <div>{activeIssue.fields.customfield_10054?.value}</div>
                 <div>Category</div> <div>{activeIssue.fields.customfield_10055?.map((v) => v.value).join(", ")}</div>
@@ -182,12 +182,21 @@ export default function Page() {
                   ))}
                 </div>
                 <div>Issue Links</div> <div className="flex flex-col">
-                  {activeIssue.fields.issuelinks.map((issuelink) => (
-                    <div key={issuelink.id} className="flex flex-row gap-1">
-                      <div>{issuelink.type.name} {issuelink.type.inward} {issuelink.type.outward}</div>
-                      <pre>{JSON.stringify(issuelink, null, 2)}</pre>
-                    </div>
-                  ))}
+                  {activeIssue.fields.issuelinks.map((issuelink) => {
+                    // TODO: status and issuetype
+                    const issue = (issuelink.inwardIssue ?? issuelink.outwardIssue)!
+                    return (
+                      <div key={issuelink.id} className="flex gap-1">
+                        <div>{issuelink.type.name}:</div>
+                        <div>{issuelink.inwardIssue ? issuelink.type.inward : null}{issuelink.outwardIssue ? issuelink.type.outward : null}</div>
+                        <div className="flex flex-row items-center gap-1">
+                          <Image src={issue.fields.issuetype.iconUrl} alt={issue.fields.issuetype.name} title={issue.fields.issuetype.description} width={0} height={0} className="size-4" />
+                          <div className="font-bold">{issue.key}</div>
+                          <div>{issue.fields.summary}</div>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
                 <div>Issue Type</div> <div className="flex flex-row items-center gap-1">
                   <Image src={activeIssue.fields.issuetype.iconUrl} alt={activeIssue.fields.issuetype.name} width={0} height={0} className="size-5" />

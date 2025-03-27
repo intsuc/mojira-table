@@ -115,7 +115,11 @@ export type JqlSearchResponse = {
       } | null,
       customfield_10047: null,
       labels: string[],
-      customfield_10048: null,
+      customfield_10048: {
+        self: string,
+        value: string,
+        id: string,
+      } | null,
       customfield_10049: {
         self: string,
         value: string,
@@ -140,7 +144,39 @@ export type JqlSearchResponse = {
           outward: string,
           self: string,
         },
-        outwardIssue: {
+        inwardIssue?: {
+          id: string,
+          key: string,
+          self: string,
+          fields: {
+            summary: string,
+            status: {
+              self: string,
+              description: string,
+              iconUrl: string,
+              name: string,
+              id: string,
+              statusCategory: {
+                self: string,
+                id: number,
+                key: string,
+                colorName: string,
+                name: string,
+              },
+            },
+            issuetype: {
+              self: string,
+              id: string,
+              description: string,
+              iconUrl: string,
+              name: string,
+              subtask: boolean,
+              avatarId: number,
+              hierarchyLevel: number,
+            },
+          },
+        },
+        outwardIssue?: {
           id: string,
           key: string,
           self: string,
