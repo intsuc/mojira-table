@@ -60,15 +60,15 @@ export default function Page() {
   const isReachingEnd = isEmpty || (data?.[data.length - 1] && data[data.length - 1]!.issues.length < maxResults)
   const isRefreshing = isValidating && data && data.length === size
 
-  function EnumSelect<T extends string>({
+  function EnumSelect<T extends { id: string, label: string }>({
     label,
     value,
     onValueChange,
     values,
   }: {
     label: string,
-    value: T | undefined,
-    onValueChange: (value: T) => void,
+    value: T["id"] | undefined,
+    onValueChange: (value: T["id"]) => void,
     values: readonly T[],
   }) {
     return (
@@ -80,7 +80,7 @@ export default function Page() {
           <SelectGroup>
             <SelectLabel>{label}</SelectLabel>
             {values.map((item) => (
-              <SelectItem key={item} value={item}>{item}</SelectItem>
+              <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>
             ))}
           </SelectGroup>
         </SelectContent>

@@ -1,29 +1,29 @@
 export const projects = [
-  "MC",
-  "MCPE",
-  "REALMS",
-  "MCL",
-  "BDS",
-  "WEB",
+  { id: "MC", label: "MC" },
+  { id: "MCPE", label: "MCPE" },
+  { id: "REALMS", label: "REALMS" },
+  { id: "MCL", label: "MCL" },
+  { id: "BDS", label: "BDS" },
+  { id: "WEB", label: "WEB" },
 ] as const
 
 export const filters = [
-  "all",
-  "open",
-  "done",
+  { id: "all", label: "All" },
+  { id: "open", label: "Open" },
+  { id: "done", label: "Done" },
 ] as const
 
 export const sortFields = [
-  "created",
-  "updated",
-  "priority",
-  "status",
+  { id: "created", label: "Created" },
+  { id: "updated", label: "Updated" },
+  { id: "priority", label: "Priority" },
+  { id: "status", label: "Status" },
 ] as const
 
 export type JqlSearchRequest = {
-  project: typeof projects[number],
-  filter: typeof filters[number],
-  sortField: typeof sortFields[number],
+  project: typeof projects[number]["id"],
+  filter: typeof filters[number]["id"],
+  sortField: typeof sortFields[number]["id"],
   sortAsc: boolean,
   advanced: boolean,
   search: string,
