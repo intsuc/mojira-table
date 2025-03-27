@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { filters, jqlSearchPost, projects, sortFields, type JqlSearchRequest } from "@/lib/api"
@@ -14,12 +15,13 @@ export default function Page() {
   const [project, setProject] = useState<JqlSearchRequest["project"] | undefined>(undefined)
   const [filter, setFilter] = useState<JqlSearchRequest["filter"]>("all")
   const [sortField, setSortField] = useState<JqlSearchRequest["sortField"]>("created")
-  const [sortAsc, setSortAsc] = useState(false)
+  const [sortAsc, setSortAsc] = useState<JqlSearchRequest["sortAsc"]>(false)
+  const [search, setSearch] = useState<JqlSearchRequest["search"]>("")
 
   const { data, error, isLoading, isValidating, size, setSize } = useSWRInfinite(
     (pageIndex) => {
       if (project === undefined) { return null }
-      return [pageIndex + 1, project, filter, sortField, sortAsc]
+      return [pageIndex + 1, project, filter, sortField, sortAsc, search]
     },
     ([
       page,
@@ -27,19 +29,21 @@ export default function Page() {
       filter,
       sortField,
       sortAsc,
+      search,
     ]: [
         page: number,
         project: JqlSearchRequest["project"],
         filter: JqlSearchRequest["filter"],
         sortField: JqlSearchRequest["sortField"],
-        sortAsc: boolean,
+        sortAsc: JqlSearchRequest["sortAsc"],
+        search: JqlSearchRequest["search"],
       ]) => jqlSearchPost({
         project,
         filter,
         sortField,
         sortAsc,
         advanced: false,
-        search: "",
+        search,
         startAt: (page - 1) * maxResults,
         maxResults,
         isForge: false,
@@ -102,6 +106,22 @@ export default function Page() {
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
+        <Input
+          placeholder="Search"
+          onBlur={(e) => setSearch(e.currentTarget.value)}
+          onKeyDown={(e) => {
+            switch (e.key) {
+              case "Enter": {
+                setSearch(e.currentTarget.value)
+                break
+              }
+              case "Escape": {
+                e.currentTarget.value = search
+                break
+              }
+            }
+          }}
+        />
       </div>
 
       {!isLoading && isEmpty ? <p>No issues found.</p> : null}
