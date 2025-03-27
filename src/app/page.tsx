@@ -2,8 +2,9 @@
 
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { filters, jqlSearchPost, projects, sortFields, type JqlSearchRequest } from "@/lib/api"
-import { Loader2 } from "lucide-react"
+import { ArrowDown01, ArrowDown10, Loader2 } from "lucide-react"
 import { useState } from "react"
 import useSWRInfinite from "swr/infinite"
 
@@ -13,27 +14,30 @@ export default function Page() {
   const [project, setProject] = useState<JqlSearchRequest["project"] | undefined>(undefined)
   const [filter, setFilter] = useState<JqlSearchRequest["filter"]>("all")
   const [sortField, setSortField] = useState<JqlSearchRequest["sortField"]>("created")
+  const [sortAsc, setSortAsc] = useState(false)
 
   const { data, error, isLoading, isValidating, size, setSize } = useSWRInfinite(
     (pageIndex) => {
       if (project === undefined) { return null }
-      return [pageIndex + 1, project, filter, sortField]
+      return [pageIndex + 1, project, filter, sortField, sortAsc]
     },
     ([
       page,
       project,
       filter,
       sortField,
+      sortAsc,
     ]: [
         page: number,
         project: JqlSearchRequest["project"],
         filter: JqlSearchRequest["filter"],
         sortField: JqlSearchRequest["sortField"],
+        sortAsc: boolean,
       ]) => jqlSearchPost({
-        project: project!,
-        filter: filter,
-        sortField: sortField,
-        sortAsc: false,
+        project,
+        filter,
+        sortField,
+        sortAsc,
         advanced: false,
         search: "",
         startAt: (page - 1) * maxResults,
@@ -79,6 +83,22 @@ export default function Page() {
         <EnumSelect placeholder="Select a project" value={project} onValueChange={setProject} values={projects} />
         <EnumSelect value={filter} onValueChange={setFilter} values={filters} />
         <EnumSelect value={sortField} onValueChange={setSortField} values={sortFields} />
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="icon" onClick={() => setSortAsc((prev) => !prev)}>
+                {sortAsc ? (
+                  <ArrowDown01 />
+                ) : (
+                  <ArrowDown10 />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Sorting</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {!isLoading && isEmpty ? <p>No issues found.</p> : null}
