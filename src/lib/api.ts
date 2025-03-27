@@ -1,10 +1,10 @@
 export const projects = [
-  { id: "MC", label: "MC" },
-  { id: "MCPE", label: "MCPE" },
-  { id: "REALMS", label: "REALMS" },
-  { id: "MCL", label: "MCL" },
-  { id: "BDS", label: "BDS" },
-  { id: "WEB", label: "WEB" },
+  { id: "MC", label: "Minecraft: Java Edition" },
+  { id: "MCPE", label: "Minecraft: Bedrock Edition" },
+  { id: "REALMS", label: "Minecraft Realms" },
+  { id: "MCL", label: "Minecraft Launcher" },
+  { id: "BDS", label: "Bedrock Dedicated Server" },
+  { id: "WEB", label: "Mojang Web Services" },
 ] as const
 
 export const filters = [

@@ -75,9 +75,9 @@ export default function Page() {
   return (
     <div className="h-full flex flex-col">
       <div className="col-span-2 p-2 flex flex-row gap-2 border-b">
-        <EnumSelect label="Project" value={project} onValueChange={setProject} values={projects} />
-        <EnumSelect label="Filter" value={filter} onValueChange={setFilter} values={filters} />
-        <EnumSelect label="Sort field" value={sortField} onValueChange={setSortField} values={sortFields} />
+        <EnumSelect className="min-w-[220px]" label="Project" value={project} onValueChange={setProject} values={projects} />
+        <EnumSelect className="min-w-[90px]" label="Filter" value={filter} onValueChange={setFilter} values={filters} />
+        <EnumSelect className="min-w-[110px]" label="Sort field" value={sortField} onValueChange={setSortField} values={sortFields} />
         <Button variant="outline" size="icon" onClick={() => setSortAsc((prev) => !prev)}>
           {sortAsc ? (
             <ArrowDown01 />
@@ -130,14 +130,14 @@ export default function Page() {
               <div
                 key={issue.key}
                 className={cn(
-                  "p-2 grid grid-cols-[auto_1fr] gap-2 text-sm hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+                  "p-2 flex flex-col text-sm hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
                   activeIssue?.key === issue.key && "bg-accent dark:bg-accent/50",
                   hideNonEnglishIssues && issue.enConfidence !== undefined && issue.enConfidence < 0.5 && "text-muted-foreground hover:text-muted-foreground bg-muted hover:bg-muted",
                 )}
                 onClick={() => setActiveIssue(issue)}
               >
                 <div>{issue.key}</div>
-                <div className="truncate">{issue.fields.summary} ({issue.enConfidence?.toFixed(2)})</div>
+                <div>{issue.fields.summary}</div>
               </div>
             ))}
             <Button
@@ -169,15 +169,17 @@ function EnumSelect<T extends { id: string, label: string }>({
   value,
   onValueChange,
   values,
+  className,
 }: {
   label: string,
   value: T["id"] | undefined,
   onValueChange: (value: T["id"]) => void,
   values: readonly T[],
+  className?: string,
 }) {
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className="w-[180px]">
+      <SelectTrigger className={className}>
         <SelectValue placeholder={label} />
       </SelectTrigger>
       <SelectContent>
