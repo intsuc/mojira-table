@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { filters, jqlSearchPost, projects, sortFields, type JqlSearchRequest } from "@/lib/api"
+import { filters, jqlSearchPost, projects, sortFields, type Content, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
+import { cn } from "@/lib/utils"
 import { ArrowDown01, ArrowDown10, Loader2 } from "lucide-react"
 import { useState } from "react"
 import useSWRInfinite from "swr/infinite"
@@ -60,6 +61,8 @@ export default function Page() {
   const isEmpty = data?.[0] ? data[0].issues.length === 0 : true
   const isReachingEnd = isEmpty || (data?.[data.length - 1] && data[data.length - 1]!.issues.length < maxResults)
 
+  const [activeIssue, setActiveIssue] = useState<JqlSearchResponse["issues"][number] | undefined>(undefined)
+
   return (
     <div className="h-full flex flex-col">
       <div className="col-span-2 p-2 flex flex-row gap-2 bg-white border-b">
@@ -97,10 +100,14 @@ export default function Page() {
 
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={20} className="overflow-y-hidden">
-          <div className="h-full overflow-y-scroll [scrollbar-width:thin]">
+          <div className="h-full flex flex-col overflow-y-scroll [scrollbar-width:thin] divide-y">
             {!isLoading && isEmpty ? <p>No issues found.</p> : null}
             {issues.map((issue) => (
-              <div key={issue.key} className="grid grid-cols-[auto_1fr] gap-2">
+              <div
+                key={issue.key}
+                className={cn("p-2 grid grid-cols-[auto_1fr] gap-2 hover:bg-zinc-50 transition-colors", activeIssue?.key === issue.key && "bg-zinc-100")}
+                onClick={() => setActiveIssue(issue)}
+              >
                 <div>{issue.key}</div>
                 <div className="truncate">{issue.fields.summary}</div>
               </div>
@@ -115,7 +122,14 @@ export default function Page() {
           </div>
         </ResizablePanel>
         <ResizableHandle />
-        <ResizablePanel>
+        <ResizablePanel className="overflow-y-hidden">
+          {activeIssue ? (
+            <div className="h-full overflow-y-scroll [scrollbar-width:thin]">
+              <div className="mx-auto prose prose-zinc">
+                <Content content={activeIssue.fields.description} />
+              </div>
+            </div>
+          ) : null}
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
@@ -147,5 +161,85 @@ function EnumSelect<T extends { id: string, label: string }>({
         </SelectGroup>
       </SelectContent>
     </Select>
+  )
+}
+
+function Content({
+  content,
+}: {
+  content: Content,
+}) {
+  switch (content.type) {
+    case "bulletList": {
+      return <ul><Contents contents={content.content} /></ul>
+    }
+    case "codeBlock": {
+      return <code><Contents contents={content.content} /></code>
+    }
+    case "doc": {
+      // TODO: check `content.version`
+      return <Contents contents={content.content} />
+    }
+    case "emoji": {
+      return content.attrs.text
+    }
+    case "hardBreak": {
+      return <br />
+    }
+    case "heading": {
+      switch (content.attrs.level) {
+        case 1: {
+          return <h1><Contents contents={content.content} /></h1>
+        }
+        case 2: {
+          return <h2><Contents contents={content.content} /></h2>
+        }
+        case 3: {
+          return <h3><Contents contents={content.content} /></h3>
+        }
+        case 4: {
+          return <h4><Contents contents={content.content} /></h4>
+        }
+        case 5: {
+          return <h5><Contents contents={content.content} /></h5>
+        }
+        case 6: {
+          return <h6><Contents contents={content.content} /></h6>
+        }
+      }
+    }
+    case "inlineCard": {
+      return <a href={content.attrs.url}>{content.attrs.url}</a>
+    }
+    case "listItem": {
+      return <li><Contents contents={content.content} /></li>
+    }
+    case "orderedList": {
+      // TODO: check `content.attrs.order`
+      return <ol><Contents contents={content.content} /></ol>
+    }
+    case "paragraph": {
+      return <p><Contents contents={content.content} /></p>
+    }
+    case "text": {
+      return content.text
+    }
+    default: {
+      return <div className="text-red-500 font-mono">{JSON.stringify(content, null, 2)}</div>
+    }
+  }
+}
+
+function Contents({
+  contents,
+}: {
+  contents?: Content[],
+}) {
+  return (
+    <>
+      {contents?.map((content, index) => (
+        <Content key={index} content={content} />
+      ))}
+    </>
   )
 }

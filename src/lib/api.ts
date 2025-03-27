@@ -33,6 +33,20 @@ export type JqlSearchRequest = {
   workspaceId: "",
 }
 
+export type Content =
+  | { type: "bulletList", content?: Content[] }
+  | { type: "codeBlock", content?: Content[] }
+  | { type: "doc", version: number, content?: Content[] }
+  | { type: "emoji", attrs: { shortName: string, id: string, text: string } }
+  | { type: "hardBreak" }
+  | { type: "heading", attrs: { level: 1 | 2 | 3 | 4 | 5 | 6 }, content?: Content[] }
+  | { type: "inlineCard", attrs: { url: string } }
+  | { type: "listItem", content?: Content[] }
+  | { type: "orderedList", attrs: { order: 1 }, content?: Content[] }
+  | { type: "panel", attrs: { panelType: "note" | "info" }, content?: Content[] }
+  | { type: "paragraph", content?: Content[] }
+  | { type: "text", text: string }
+
 export type JqlSearchResponse = {
   expand: string,
   startAt: number,
@@ -66,11 +80,7 @@ export type JqlSearchResponse = {
       customfield_10061: null,
       customfield_10050: null,
       customfield_10051: null,
-      description: {
-        type: string,
-        version: number,
-        content: unknown[],
-      },
+      description: Content,
       customfield_10054: {
         self: string
         value: string,
