@@ -8,8 +8,8 @@ export const projects = [
 ] as const
 
 export const filters = [
-  "open",
   "all",
+  "open",
   "done",
 ] as const
 
