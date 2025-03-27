@@ -103,7 +103,6 @@ export default function Page() {
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={20} className="overflow-y-hidden">
           <div className="h-full flex flex-col overflow-y-scroll [scrollbar-width:thin] divide-y">
-            {!isLoading && isEmpty ? <p>No issues found.</p> : null}
             {issues.map((issue) => (
               <div
                 key={issue.key}
