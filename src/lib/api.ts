@@ -42,6 +42,9 @@ export type Content =
   | { type: "heading", attrs: { level: 1 | 2 | 3 | 4 | 5 | 6 }, content?: Content[] }
   | { type: "inlineCard", attrs: { url: string } }
   | { type: "listItem", content?: Content[] }
+  | { type: "media", attrs: { type: "external", url: string, height: number, width: number } }
+  | { type: "mediaSingle", attrs: { layout: "center" }, content?: Content[] }
+  | { type: "mention", attrs: { id: string, text: string, accessLevel: string } }
   | { type: "orderedList", attrs: { order: 1 }, content?: Content[] }
   | { type: "panel", attrs: { panelType: "note" | "info" }, content?: Content[] }
   | { type: "paragraph", content?: Content[] }
@@ -129,7 +132,7 @@ export type JqlSearchResponse = {
 
 const jqlSearchPostUrl = "https://bugs.mojang.com/api/jql-search-post"
 
-export async function jqlSearchPost(request: JqlSearchRequest): Promise<JqlSearchResponse> {
+export async function jqlSearchPost(request: JqlSearchRequest, signal?: AbortSignal): Promise<JqlSearchResponse> {
   const response = await fetch(jqlSearchPostUrl, {
     method: "POST",
     headers: {
@@ -137,6 +140,7 @@ export async function jqlSearchPost(request: JqlSearchRequest): Promise<JqlSearc
       "Content-Type": "application/json",
     },
     body: JSON.stringify(request),
+    signal,
   })
   return response.json()
 }
