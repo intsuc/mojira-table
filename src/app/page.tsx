@@ -1,5 +1,6 @@
 "use client"
 
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -65,7 +66,7 @@ export default function Page() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="col-span-2 p-2 flex flex-row gap-2 bg-white border-b">
+      <div className="col-span-2 p-2 flex flex-row gap-2 border-b">
         <EnumSelect label="Project" value={project} onValueChange={setProject} values={projects} />
         <EnumSelect label="Filter" value={filter} onValueChange={setFilter} values={filters} />
         <EnumSelect label="Sort field" value={sortField} onValueChange={setSortField} values={sortFields} />
@@ -96,6 +97,7 @@ export default function Page() {
             }
           }}
         />
+        <ThemeToggle />
       </div>
 
       <ResizablePanelGroup direction="horizontal">
