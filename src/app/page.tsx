@@ -1,6 +1,7 @@
 "use client"
 
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
@@ -13,6 +14,7 @@ import { createLanguageDetector } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { ArrowDown01, ArrowDown10, Loader2, Menu } from "lucide-react"
+import Image from "next/image"
 import { useState } from "react"
 
 const maxResults = 25
@@ -71,6 +73,8 @@ export default function Page() {
   const issues = data?.pages.flatMap((page) => page) ?? []
 
   const [activeIssue, setActiveIssue] = useState<JqlSearchResponse["issues"][number] | undefined>(undefined)
+
+  console.log(activeIssue)
 
   return (
     <div className="h-full flex flex-col">
@@ -136,7 +140,10 @@ export default function Page() {
                 )}
                 onClick={() => setActiveIssue(issue)}
               >
-                <div>{issue.key}</div>
+                <div className="flex flex-row gap-1">
+                  <Image src={issue.fields.issuetype.iconUrl} alt={issue.fields.issuetype.name} width={0} height={0} className="w-5 h-auto" />
+                  <div className="font-medium">{issue.key}</div>
+                </div>
                 <div>{issue.fields.summary}</div>
               </div>
             ))}
@@ -152,9 +159,71 @@ export default function Page() {
         <ResizableHandle />
         <ResizablePanel className="overflow-y-hidden">
           {activeIssue ? (
-            <div className="h-full overflow-y-scroll [scrollbar-width:thin]">
-              <div className="mx-auto prose prose-zinc dark:prose-invert">
-                <Content content={activeIssue.fields.description} />
+            <div className="p-4 w-full h-full overflow-x-hidden overflow-y-scroll [scrollbar-width:thin]">
+              <div>{activeIssue.key}</div>
+              <div className="text-2xl font-bold">{activeIssue.fields.summary}</div>
+
+              <div className="grid grid-cols-[10rem_auto] *:py-2 *:border-b">
+                <div>Created</div> <div>{new Date(activeIssue.fields.created).toLocaleString()}</div>
+                <div>Custom Field 10047</div> <div>{activeIssue.fields.customfield_10047 ? new Date(activeIssue.fields.customfield_10047).toLocaleString() : null}</div>
+                <div>Custom Field 10048</div> <div>{activeIssue.fields.customfield_10048}</div>
+                <div>Mojang Priority</div> <div>{activeIssue.fields.customfield_10049?.value}</div>
+                <div>Custom Field 10050</div> <div>{activeIssue.fields.customfield_10050}</div>
+                <div>Area</div> <div>{activeIssue.fields.customfield_10051?.value}</div>
+                <div>Confirmation Status</div> <div>{activeIssue.fields.customfield_10054?.value}</div>
+                <div>Category</div> <div>{activeIssue.fields.customfield_10055?.map((v) => v.value).join(", ")}</div>
+                <div>Custom Field 10061</div> <div>{activeIssue.fields.customfield_10061}</div>
+                <div>Votes</div> <div>{activeIssue.fields.customfield_10070 ?? 0}</div>
+                <div>Fix Versions</div> <div className="flex flex-wrap gap-1">
+                  {activeIssue.fields.fixVersions.map((fixVersion) => (
+                    <div key={fixVersion.id}>
+                      <Badge title={fixVersion.description}>{fixVersion.name}</Badge>
+                    </div>
+                  ))}
+                </div>
+                <div>Issue Links</div> <div className="flex flex-col">
+                  {activeIssue.fields.issuelinks.map((issuelink) => (
+                    <div key={issuelink.id} className="flex flex-row gap-1">
+                      <div>{issuelink.type.name} {issuelink.type.inward} {issuelink.type.outward}</div>
+                      <pre>{JSON.stringify(issuelink, null, 2)}</pre>
+                    </div>
+                  ))}
+                </div>
+                <div>Issue Type</div> <div className="flex flex-row items-center gap-1">
+                  <Image src={activeIssue.fields.issuetype.iconUrl} alt={activeIssue.fields.issuetype.name} width={0} height={0} className="size-5" />
+                  <div title={activeIssue.fields.issuetype.description}>{activeIssue.fields.issuetype.name}</div>
+                </div>
+                <div>Labels</div> <div className="flex flex-wrap gap-1">
+                  {activeIssue.fields.labels.map((label) => (
+                    <div key={label}>
+                      <Badge>{label}</Badge>
+                    </div>
+                  ))}
+                </div>
+                <div>Resolution</div> <div><div title={activeIssue.fields.resolution?.description}>{activeIssue.fields.resolution?.name}</div></div>
+                <div>Resolution Date</div> <div>{activeIssue.fields.resolutiondate ? new Date(activeIssue.fields.resolutiondate).toLocaleString() : null}</div>
+                <div>Status</div> <div className="flex flex-row items-center gap-1">
+                  <Image src={activeIssue.fields.status.iconUrl} alt={activeIssue.fields.status.name} width={0} height={0} className="size-4" />
+                  <div title={activeIssue.fields.status.description}>{activeIssue.fields.status.name}</div>
+                  <div title={activeIssue.fields.status.statusCategory.colorName}>({activeIssue.fields.status.statusCategory.name})</div>
+                </div>
+                <div>Updated</div> <div>{new Date(activeIssue.fields.updated).toLocaleString()}</div>
+                <div>Versions</div> <div className="flex flex-wrap gap-1">
+                  {activeIssue.fields.versions.map((version) => (
+                    <div key={version.id}>
+                      <Badge>{version.name}</Badge>
+                    </div>
+                  ))}
+                </div>
+                <div>Watches</div> <div>{activeIssue.fields.watches.watchCount}</div>
+              </div>
+
+              <div className="p-8 grid justify-center">
+                <div className="prose prose-zinc dark:prose-invert">
+                  {activeIssue.fields.description !== null ? (
+                    <Content content={activeIssue.fields.description} />
+                  ) : null}
+                </div>
               </div>
             </div>
           ) : null}
