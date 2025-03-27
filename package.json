@@ -33,6 +33,7 @@
     "@next/eslint-plugin-next": "^15.2.4",
     "@tailwindcss/postcss": "^4.0.17",
     "@tailwindcss/typography": "^0.5.16",
+    "@types/dom-chromium-ai": "^0.0.6",
     "@types/node": "^22.13.13",
     "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",

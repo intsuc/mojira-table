@@ -75,6 +75,9 @@ importers:
       '@tailwindcss/typography':
         specifier: ^0.5.16
         version: 0.5.16(tailwindcss@4.0.17)
+      '@types/dom-chromium-ai':
+        specifier: ^0.0.6
+        version: 0.0.6
       '@types/node':
         specifier: ^22.13.13
         version: 22.13.13
@@ -805,6 +808,9 @@ packages:
 
   '@tybys/wasm-util@0.9.0':
     resolution: {integrity: sha512-6+7nlbMVX/PVDCwaIQ8nTOPveOcFLSt8GcXdx8hD0bt39uWxYT88uXzqTd4fTvqta7oeUJqudepapKNt2DYJFw==}
+
+  '@types/dom-chromium-ai@0.0.6':
+    resolution: {integrity: sha512-/jUGe9a3BLzsjjg18Olk/Ul64PZ0P4aw8uNxrXeXVTni5PSxyCfyhHb4UohsXNVByOnwYGzlqUcb3vYKVsG4mg==}
 
   '@types/estree@1.0.7':
     resolution: {integrity: sha512-w28IoSUCJpidD/TGviZwwMJckNESJZXFu7NBZ5YJ4mEUnNraUn9Pm8HSZm/jDF1pDWYKspWE7oVphigUPRakIQ==}
@@ -2826,6 +2832,8 @@ snapshots:
     dependencies:
       tslib: 2.8.1
     optional: true
+
+  '@types/dom-chromium-ai@0.0.6': {}
 
   '@types/estree@1.0.7': {}
 
