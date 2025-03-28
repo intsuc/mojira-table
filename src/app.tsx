@@ -1,20 +1,20 @@
-import { filters, jqlSearchPost, projects, sortFields, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
-import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table"
+import { filters, jqlSearchPost, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
+import { type ColumnDef, flexRender, getCoreRowModel, getSortedRowModel, type HeaderContext, type SortingState, useReactTable } from "@tanstack/react-table"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { useInfiniteQuery } from "@tanstack/react-query"
+import { useInfiniteQuery, type QueryFunction } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
 import { createLanguageDetector } from "@/lib/store"
-import { ArrowDown01, ArrowDown10, Loader2, Menu } from "lucide-react"
+import { ArrowDown, ArrowDown01, ArrowDown10, Loader2, Menu } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Content } from "@/components/content"
 
@@ -25,48 +25,62 @@ type IssueWithConfidence = (
   & { enConfidence: number | undefined }
 )
 
+type QueryKey = readonly [JqlSearchRequest["project"], JqlSearchRequest["filter"], SortingState, JqlSearchRequest["advanced"], JqlSearchRequest["search"], boolean]
+
+const queryFn: QueryFunction<IssueWithConfidence[], QueryKey, number> = async ({
+  pageParam,
+  signal,
+  queryKey: [project, filter, sorting, advanced, search, hideNonEnglishIssues],
+}): Promise<IssueWithConfidence[]> => {
+  const sortId = sorting[0]?.id
+  const sortField = sortId === "Created" ? "created"
+    : sortId === "Updated" ? "updated"
+      : sortId === "Status" ? "status"
+        : "created"
+  const sortAsc = sorting[0]?.desc === false
+
+  const response = await jqlSearchPost({
+    project: project!,
+    filter,
+    sortField,
+    sortAsc,
+    advanced,
+    search,
+    startAt: pageParam * maxResults,
+    maxResults,
+    isForge: false,
+    workspaceId: "",
+  }, signal)
+  const issues = response.issues as IssueWithConfidence[]
+  if (hideNonEnglishIssues) {
+    const languageDetector = await createLanguageDetector()
+    if (languageDetector !== undefined) {
+      await Promise.all(issues.map(async (issue) => {
+        const results = await languageDetector.detect(issue.fields.summary)
+        for (const { detectedLanguage, confidence } of results) {
+          if (detectedLanguage === "en") {
+            issue.enConfidence = confidence
+            break
+          }
+        }
+      }))
+    }
+  }
+  return issues
+}
+
 export function App() {
   const [hideNonEnglishIssues, setHideNonEnglishIssues] = useState(false)
 
   const [project, setProject] = useState<JqlSearchRequest["project"] | undefined>(undefined)
   const [filter, setFilter] = useState<JqlSearchRequest["filter"]>("all")
-  const [sortField, setSortField] = useState<JqlSearchRequest["sortField"]>("created")
-  const [sortAsc, setSortAsc] = useState<JqlSearchRequest["sortAsc"]>(false)
+  const [sorting, setSorting] = useState<SortingState>([{ id: "Created", desc: true }])
   const [advanced, setAdvanced] = useState<JqlSearchRequest["advanced"]>(false)
   const [search, setSearch] = useState<JqlSearchRequest["search"]>("")
 
   const { data, fetchNextPage, hasNextPage, isFetching } = useInfiniteQuery({
-    queryKey: [project, filter, sortField, sortAsc, advanced, search, hideNonEnglishIssues],
-    queryFn: async ({ pageParam, signal }): Promise<IssueWithConfidence[]> => {
-      const response = await jqlSearchPost({
-        project: project!,
-        filter,
-        sortField,
-        sortAsc,
-        advanced,
-        search,
-        startAt: pageParam * maxResults,
-        maxResults,
-        isForge: false,
-        workspaceId: "",
-      }, signal)
-      const issues = response.issues as IssueWithConfidence[]
-      if (hideNonEnglishIssues) {
-        const languageDetector = await createLanguageDetector()
-        if (languageDetector !== undefined) {
-          await Promise.all(issues.map(async (issue) => {
-            const results = await languageDetector.detect(issue.fields.summary)
-            for (const { detectedLanguage, confidence } of results) {
-              if (detectedLanguage === "en") {
-                issue.enConfidence = confidence
-                break
-              }
-            }
-          }))
-        }
-      }
-      return issues
-    },
+    queryKey: [project!, filter, sorting, advanced, search, hideNonEnglishIssues],
+    queryFn,
     initialPageParam: 0,
     getNextPageParam: (lastPage, _allPages, lastPageParam) => {
       if (lastPage.length < maxResults) {
@@ -92,9 +106,31 @@ export function App() {
       header: "Summary",
     },
     {
+      id: "Created",
       accessorFn: (row) => row.fields.created,
-      header: "Created",
+      header: Sorter,
       cell: ({ getValue }) => new Date(getValue<string>()).toLocaleString(),
+    },
+    {
+      id: "Updated",
+      accessorFn: (row) => row.fields.updated,
+      header: Sorter,
+      cell: ({ getValue }) => new Date(getValue<string>()).toLocaleString(),
+    },
+    {
+      id: "Status",
+      accessorFn: (row) => row.fields.status,
+      header: Sorter,
+      cell: ({ getValue }) => {
+        const status = getValue<JqlSearchResponse["issues"][number]["fields"]["status"]>()
+        return (
+          <div className="flex flex-row items-center gap-1">
+            <img src={status.iconUrl} alt={status.name} width={0} height={0} className="size-4" />
+            <div title={status.description}>{status.name}</div>
+            <div title={status.statusCategory.colorName}>({status.statusCategory.name})</div>
+          </div>
+        )
+      }
     },
     {
       accessorFn: (row) => row.fields.customfield_10047,
@@ -198,25 +234,6 @@ export function App() {
       }
     },
     {
-      accessorFn: (row) => row.fields.status,
-      header: "Status",
-      cell: ({ getValue }) => {
-        const status = getValue<JqlSearchResponse["issues"][number]["fields"]["status"]>()
-        return (
-          <div className="flex flex-row items-center gap-1">
-            <img src={status.iconUrl} alt={status.name} width={0} height={0} className="size-4" />
-            <div title={status.description}>{status.name}</div>
-            <div title={status.statusCategory.colorName}>({status.statusCategory.name})</div>
-          </div>
-        )
-      }
-    },
-    {
-      accessorFn: (row) => row.fields.updated,
-      header: "Updated",
-      cell: ({ getValue }) => new Date(getValue<string>()).toLocaleString(),
-    },
-    {
       accessorFn: (row) => row.fields.versions,
       header: "Affects Versions",
       cell: ({ getValue }) => {
@@ -236,6 +253,12 @@ export function App() {
     data: issues,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
+    manualSorting: true,
+    state: {
+      sorting,
+    },
   })
 
   const [activeIssue, setActiveIssue] = useState<IssueWithConfidence | undefined>(undefined)
@@ -250,14 +273,6 @@ export function App() {
         <div className="col-span-2 p-2 flex flex-row gap-2 border-b">
           <EnumSelect className="min-w-[220px]" label="Project" value={project} onValueChange={setProject} values={projects} />
           <EnumSelect className="min-w-[90px]" label="Filter" value={filter} onValueChange={setFilter} values={filters} />
-          <EnumSelect className="min-w-[110px]" label="Sort field" value={sortField} onValueChange={setSortField} values={sortFields} />
-          <Button variant="outline" size="icon" onClick={() => setSortAsc((prev) => !prev)}>
-            {sortAsc ? (
-              <ArrowDown01 />
-            ) : (
-              <ArrowDown10 />
-            )}
-          </Button>
           <div className="flex items-center space-x-2">
             <Switch id="advanced" checked={advanced} onCheckedChange={setAdvanced} />
             <Label htmlFor="advanced">Advanced</Label>
@@ -396,6 +411,36 @@ export function App() {
   )
 }
 
+function Sorter<T>({ header, column }: HeaderContext<T, unknown>) {
+  const direction = column.getIsSorted() || "none"
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost">
+          {header.id}
+          {direction === "none" ? <ArrowDown className="text-muted-foreground" /> : direction === "desc" ? <ArrowDown10 /> : <ArrowDown01 />}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56">
+        <DropdownMenuLabel>{header.id}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuRadioGroup value={direction} onValueChange={(value) => {
+          if (value === "none") {
+            column.clearSorting()
+          } else {
+            column.toggleSorting(value === "desc")
+          }
+        }}>
+          <DropdownMenuRadioItem value="none"><ArrowDown />None</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="desc"><ArrowDown10 />Descending</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="asc"><ArrowDown01 />Ascending</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
 function EnumSelect<T extends { id: string, label: string }>({
   label,
   value,
@@ -486,7 +531,6 @@ function Issue({
           <div title={activeIssue.fields.status.description}>{activeIssue.fields.status.name}</div>
           <div title={activeIssue.fields.status.statusCategory.colorName}>({activeIssue.fields.status.statusCategory.name})</div>
         </div>
-        <div>Updated</div> <div>{new Date(activeIssue.fields.updated).toLocaleString()}</div>
         <div>Affects Versions</div> <div className="flex flex-wrap gap-1">
           {activeIssue.fields.versions.map((version) => (
             <div key={version.id}>

@@ -13,17 +13,10 @@ export const filters = [
   { id: "done", label: "Done" },
 ] as const
 
-export const sortFields = [
-  { id: "created", label: "Created" },
-  { id: "updated", label: "Updated" },
-  { id: "priority", label: "Priority" },
-  { id: "status", label: "Status" },
-] as const
-
 export type JqlSearchRequest = {
   project: typeof projects[number]["id"],
   filter: typeof filters[number]["id"],
-  sortField: typeof sortFields[number]["id"],
+  sortField: "created" | "updated" | "priority" | "status",
   sortAsc: boolean,
   advanced: boolean,
   search: string,
