@@ -15,6 +15,9 @@ export default function Layout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full">
+      <head>
+        <link rel="preconnect" href="https://bugs.mojang.com" />
+      </head>
       <body className="antialiased h-full overflow-hidden">
         <QueryProvider>
           <ThemeProvider
