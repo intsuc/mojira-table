@@ -112,7 +112,7 @@ export function App() {
     {
       accessorFn: (row) => row.key,
       header: "Key",
-      size: 90,
+      size: 100,
     },
     {
       accessorFn: (row) => row.fields.summary,
@@ -123,20 +123,20 @@ export function App() {
       id: "Created",
       accessorFn: (row) => row.fields.created,
       header: ColumnMenu,
-      size: 150,
+      size: 180,
       cell: ({ getValue }) => new Date(getValue<string>()).toLocaleString(),
     },
     {
       id: "Updated",
       accessorFn: (row) => row.fields.updated,
       header: ColumnMenu,
-      size: 150,
+      size: 180,
       cell: ({ getValue }) => new Date(getValue<string>()).toLocaleString(),
     },
     {
       accessorFn: (row) => row.fields.resolutiondate,
       header: "Resolved",
-      size: 150,
+      size: 180,
       cell: ({ getValue }) => {
         const value = getValue<string | null>()
         return value ? new Date(value).toLocaleString() : <div className="text-muted-foreground">Unresolved</div>
@@ -278,7 +278,7 @@ export function App() {
     {
       accessorFn: (row) => row.fields.customfield_10047,
       header: "CHK",
-      size: 150,
+      size: 180,
       cell: ({ getValue }) => {
         const value = getValue<string | null>()
         return value ? new Date(value).toLocaleString() : null
