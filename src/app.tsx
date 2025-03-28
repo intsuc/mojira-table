@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch"
 import { keepPreviousData, useInfiniteQuery, type QueryFunction } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
 import { createLanguageDetector } from "@/lib/store"
-import { ArrowDown, ArrowDown01, ArrowDown10, Loader2, Menu } from "lucide-react"
+import { ArrowDown, ArrowDown01, ArrowDown10, Loader2, Menu, RefreshCw } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Content } from "@/components/content"
 import { cn } from "./lib/utils"
@@ -81,7 +81,7 @@ export function App() {
   const [advanced, setAdvanced] = useState<JqlSearchRequest["advanced"]>(false)
   const [search, setSearch] = useState<JqlSearchRequest["search"]>("")
 
-  const { data, fetchNextPage, hasNextPage, isFetching, isRefetching } = useInfiniteQuery({
+  const { data, fetchNextPage, hasNextPage, isFetching, isRefetching, refetch } = useInfiniteQuery({
     queryKey: [project, sorting, columnFilters, advanced, search, hideNonEnglishIssues],
     queryFn,
     initialPageParam: 0,
@@ -307,6 +307,9 @@ export function App() {
             }}
             className="min-w-[300px]"
           />
+          <Button variant="outline" size="icon" disabled={isRefetching} onClick={() => void refetch()}>
+            <RefreshCw className={cn(isRefetching && "animate-spin")} />
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon">
@@ -344,12 +347,7 @@ export function App() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody
-            className={cn(
-              "relative",
-              isRefetching && "after:content-[''] after:absolute after:inset-0 after:bg-primary/10 after:animate-pulse after:pointer-events-none",
-            )}
-          >
+          <TableBody className="relative">
             {table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}
