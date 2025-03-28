@@ -272,7 +272,7 @@ export function App() {
   return (
     <>
       <div className="h-full flex flex-col overflow-hidden">
-        <div className="col-span-2 p-2 flex flex-row gap-2 border-b overscroll-none">
+        <div className="col-span-2 p-2 flex flex-row gap-2 border-b overflow-x-auto overflow-y-hidden">
           <Select value={project} onValueChange={setProject as (value: JqlSearchRequest["project"]) => void}>
             <SelectTrigger className="min-w-[220px]">
               <SelectValue placeholder="Project" />
@@ -286,7 +286,7 @@ export function App() {
               </SelectGroup>
             </SelectContent>
           </Select>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <Switch id="advanced" checked={advanced} onCheckedChange={setAdvanced} />
             <Label htmlFor="advanced">Advanced</Label>
           </div>
@@ -305,6 +305,7 @@ export function App() {
                 }
               }
             }}
+            className="min-w-[300px]"
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -343,7 +344,12 @@ export function App() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className="relative">
+          <TableBody
+            className={cn(
+              "relative",
+              isRefetching && "after:content-[''] after:absolute after:inset-0 after:bg-primary/10 after:animate-pulse after:pointer-events-none",
+            )}
+          >
             {table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}
@@ -369,10 +375,6 @@ export function App() {
                 </Button>
               </TableCell>
             </TableRow>
-            <TableRow className={cn(
-              "absolute inset-x-0 top-0 h-full bg-primary/10 animate-pulse pointer-events-none",
-              isRefetching ? "block" : "hidden",
-            )}></TableRow>
           </TableBody>
         </Table>
       </div>
