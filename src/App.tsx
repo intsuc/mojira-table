@@ -1,6 +1,3 @@
-"use no memo"
-"use client"
-
 import { filters, jqlSearchPost, projects, sortFields, type Content, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
 import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -18,7 +15,6 @@ import { useInfiniteQuery } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
 import { createLanguageDetector } from "@/lib/store"
 import { ArrowDown01, ArrowDown10, Loader2, Menu } from "lucide-react"
-import Image from "next/image"
 import { useIsMobile } from "@/hooks/use-mobile"
 
 const maxResults = 25
@@ -29,6 +25,8 @@ type IssueWithConfidence = (
 )
 
 export default function Page() {
+  "use no memo"
+
   const [hideNonEnglishIssues, setHideNonEnglishIssues] = useState(false)
 
   const [project, setProject] = useState<JqlSearchRequest["project"] | undefined>(undefined)
@@ -160,7 +158,7 @@ export default function Page() {
         const issuetype = getValue<JqlSearchResponse["issues"][number]["fields"]["issuetype"]>()
         return (
           <div className="flex flex-row items-center gap-1">
-            <Image src={issuetype.iconUrl} alt={issuetype.name} width={0} height={0} className="size-5" />
+            <img src={issuetype.iconUrl} alt={issuetype.name} width={0} height={0} className="size-5" />
             <div title={issuetype.description}>{issuetype.name}</div>
           </div>
         )
@@ -201,7 +199,7 @@ export default function Page() {
         const status = getValue<JqlSearchResponse["issues"][number]["fields"]["status"]>()
         return (
           <div className="flex flex-row items-center gap-1">
-            <Image src={status.iconUrl} alt={status.name} width={0} height={0} className="size-4" />
+            <img src={status.iconUrl} alt={status.name} width={0} height={0} className="size-4" />
             <div title={status.description}>{status.name}</div>
             <div title={status.statusCategory.colorName}>({status.statusCategory.name})</div>
           </div>
@@ -457,7 +455,7 @@ function Issue({
                 <div>{issuelink.type.name}:</div>
                 <div>{issuelink.inwardIssue ? issuelink.type.inward : null}{issuelink.outwardIssue ? issuelink.type.outward : null}</div>
                 <div className="flex flex-row items-center gap-1">
-                  <Image src={issue.fields.issuetype.iconUrl} alt={issue.fields.issuetype.name} title={issue.fields.issuetype.description} width={0} height={0} className="size-4" />
+                  <img src={issue.fields.issuetype.iconUrl} alt={issue.fields.issuetype.name} title={issue.fields.issuetype.description} width={0} height={0} className="size-4" />
                   <div className="font-bold">{issue.key}</div>
                   <div>{issue.fields.summary}</div>
                 </div>
@@ -466,7 +464,7 @@ function Issue({
           })}
         </div>
         <div>Issue Type</div> <div className="flex flex-row items-center gap-1">
-          <Image src={activeIssue.fields.issuetype.iconUrl} alt={activeIssue.fields.issuetype.name} width={0} height={0} className="size-5" />
+          <img src={activeIssue.fields.issuetype.iconUrl} alt={activeIssue.fields.issuetype.name} width={0} height={0} className="size-5" />
           <div title={activeIssue.fields.issuetype.description}>{activeIssue.fields.issuetype.name}</div>
         </div>
         <div>Labels</div> <div className="flex flex-wrap gap-1">
@@ -479,7 +477,7 @@ function Issue({
         <div>Resolution</div> <div><div title={activeIssue.fields.resolution?.description}>{activeIssue.fields.resolution?.name}</div></div>
         <div>Resolved</div> <div>{activeIssue.fields.resolutiondate ? new Date(activeIssue.fields.resolutiondate).toLocaleString() : null}</div>
         <div>Status</div> <div className="flex flex-row items-center gap-1">
-          <Image src={activeIssue.fields.status.iconUrl} alt={activeIssue.fields.status.name} width={0} height={0} className="size-4" />
+          <img src={activeIssue.fields.status.iconUrl} alt={activeIssue.fields.status.name} width={0} height={0} className="size-4" />
           <div title={activeIssue.fields.status.description}>{activeIssue.fields.status.name}</div>
           <div title={activeIssue.fields.status.statusCategory.colorName}>({activeIssue.fields.status.statusCategory.name})</div>
         </div>
