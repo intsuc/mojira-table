@@ -25,8 +25,6 @@ type IssueWithConfidence = (
 )
 
 export default function Page() {
-  "use no memo"
-
   const [hideNonEnglishIssues, setHideNonEnglishIssues] = useState(false)
 
   const [project, setProject] = useState<JqlSearchRequest["project"] | undefined>(undefined)
