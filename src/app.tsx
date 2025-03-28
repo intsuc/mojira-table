@@ -82,8 +82,7 @@ export function App() {
   const [search, setSearch] = useState<JqlSearchRequest["search"]>("")
 
   const { data, fetchNextPage, hasNextPage, isFetching, isRefetching } = useInfiniteQuery({
-    enabled: project !== undefined,
-    queryKey: [project!, sorting, columnFilters, advanced, search, hideNonEnglishIssues],
+    queryKey: [project, sorting, columnFilters, advanced, search, hideNonEnglishIssues],
     queryFn,
     initialPageParam: 0,
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
