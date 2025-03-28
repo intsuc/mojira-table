@@ -272,7 +272,7 @@ export function App() {
   return (
     <>
       <div className="h-full flex flex-col overflow-hidden">
-        <div className="col-span-2 p-2 flex flex-row gap-2 border-b">
+        <div className="col-span-2 p-2 flex flex-row gap-2 border-b overscroll-none">
           <Select value={project} onValueChange={setProject as (value: JqlSearchRequest["project"]) => void}>
             <SelectTrigger className="min-w-[220px]">
               <SelectValue placeholder="Project" />
@@ -324,7 +324,7 @@ export function App() {
           <ThemeToggle />
         </div>
 
-        <Table className="overscroll-none">
+        <Table>
           <TableHeader className="sticky top-0 z-10 bg-background shadow-[0_1px_0_var(--border)]">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
