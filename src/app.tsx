@@ -96,6 +96,20 @@ export function App() {
 
   const columns: ColumnDef<IssueWithConfidence>[] = useMemo(() => [
     {
+      accessorFn: (row) => row.fields.issuetype,
+      header: "Issue Type",
+      size: 85,
+      cell: ({ getValue }) => {
+        const issuetype = getValue<JqlSearchResponse["issues"][number]["fields"]["issuetype"]>()
+        return (
+          <div className="flex flex-row items-center gap-1">
+            <img src={issuetype.iconUrl} alt={issuetype.name} width={0} height={0} className="size-5" />
+            <div title={issuetype.description}>{issuetype.name}</div>
+          </div>
+        )
+      }
+    },
+    {
       accessorFn: (row) => row.key,
       header: "Key",
       size: 90,
@@ -120,6 +134,26 @@ export function App() {
       cell: ({ getValue }) => new Date(getValue<string>()).toLocaleString(),
     },
     {
+      accessorFn: (row) => row.fields.resolutiondate,
+      header: "Resolved",
+      size: 150,
+      cell: ({ getValue }) => {
+        const value = getValue<string | null>()
+        return value ? new Date(value).toLocaleString() : <div className="text-muted-foreground">Unresolved</div>
+      }
+    },
+    {
+      accessorFn: (row) => row.fields.resolution,
+      header: "Resolution",
+      size: 130,
+      cell: ({ getValue }) => {
+        const resolution = getValue<JqlSearchResponse["issues"][number]["fields"]["resolution"]>()
+        return (
+          <div title={resolution?.description}>{resolution?.name}</div>
+        )
+      }
+    },
+    {
       id: "Status",
       accessorFn: (row) => row.fields.status,
       header: StatusColumnMenu,
@@ -135,33 +169,34 @@ export function App() {
       }
     },
     {
-      accessorFn: (row) => row.fields.customfield_10047,
-      header: "CHK",
-      size: 150,
+      accessorFn: (row) => row.fields.versions,
+      header: "Affects Version/s",
+      size: 140,
       cell: ({ getValue }) => {
-        const value = getValue<string | null>()
-        return value ? new Date(value).toLocaleString() : null
-      },
+        const versions = getValue<JqlSearchResponse["issues"][number]["fields"]["versions"]>()
+        return (
+          <div className="flex gap-0.5 overflow-x-auto ![scrollbar-width:none]">
+            {versions?.map((version) => (
+              <Badge key={version.id} variant="secondary" title={version.releaseDate}>{version.name}</Badge>
+            ))}
+          </div>
+        )
+      }
     },
     {
-      accessorFn: (row) => row.fields.customfield_10048?.value,
-      header: "Game Mode",
-      size: 100,
-    },
-    {
-      accessorFn: (row) => row.fields.customfield_10049?.value,
-      header: "Mojang Priority",
-      size: 100,
-    },
-    {
-      accessorFn: (row) => row.fields.customfield_10050,
-      header: "ADO",
-      size: 100,
-    },
-    {
-      accessorFn: (row) => row.fields.customfield_10051?.value,
-      header: "Area",
-      size: 100,
+      accessorFn: (row) => row.fields.labels,
+      header: "Labels",
+      size: 140,
+      cell: ({ getValue }) => {
+        const labels = getValue<string[]>()
+        return (
+          <div className="flex gap-0.5 overflow-x-auto ![scrollbar-width:none]">
+            {labels.map((label) => (
+              <Badge key={label} variant="secondary">{label}</Badge>
+            ))}
+          </div>
+        )
+      }
     },
     {
       accessorFn: (row) => row.fields.customfield_10054?.value,
@@ -174,10 +209,35 @@ export function App() {
       size: 100,
       cell: ({ getValue }) => {
         const categories = getValue<JqlSearchResponse["issues"][number]["fields"]["customfield_10055"]>()
-        return categories?.map((category) => (
-          <Badge key={category.id}>{category.value}</Badge>
-        ))
+        if (categories?.length === 1 && categories[0]?.value === "(Unassigned)") {
+          return (
+            <div className="text-muted-foreground">(Unassigned)</div>
+          )
+        } else {
+          return (
+            <div className="flex gap-0.5 overflow-x-auto ![scrollbar-width:none]">
+              {categories?.map((category) => (
+                <Badge key={category.id} variant="secondary">{category.value}</Badge>
+              ))}
+            </div>
+          )
+        }
       }
+    },
+    {
+      accessorFn: (row) => row.fields.customfield_10048?.value,
+      header: "Game Mode",
+      size: 100,
+    },
+    {
+      accessorFn: (row) => row.fields.customfield_10051?.value,
+      header: "Area",
+      size: 100,
+    },
+    {
+      accessorFn: (row) => row.fields.customfield_10049?.value,
+      header: "Mojang Priority",
+      size: 115,
     },
     {
       accessorFn: (row) => row.fields.customfield_10061,
@@ -185,19 +245,18 @@ export function App() {
       size: 100,
     },
     {
-      accessorFn: (row) => row.fields.customfield_10070 ?? 0,
-      header: "Votes Count",
-      size: 100,
-    },
-    {
       accessorFn: (row) => row.fields.fixVersions,
-      header: "Fix Versions",
+      header: "Fix Version/s",
       size: 140,
       cell: ({ getValue }) => {
         const fixVersions = getValue<JqlSearchResponse["issues"][number]["fields"]["fixVersions"]>()
-        return fixVersions?.map((fixVersion) => (
-          <Badge key={fixVersion.id} title={fixVersion.description}>{fixVersion.name}</Badge>
-        ))
+        return (
+          <div className="flex gap-0.5 overflow-x-auto ![scrollbar-width:none]">
+            {fixVersions?.map((fixVersion) => (
+              <Badge key={fixVersion.id} variant="secondary" title={fixVersion.description}>{fixVersion.name}</Badge>
+            ))}
+          </div>
+        )
       }
     },
     // {
@@ -205,66 +264,32 @@ export function App() {
     //   header: "Linked Issues",
     // },
     {
-      accessorFn: (row) => row.fields.issuetype,
-      header: "Issue Type",
-      size: 90,
-      cell: ({ getValue }) => {
-        const issuetype = getValue<JqlSearchResponse["issues"][number]["fields"]["issuetype"]>()
-        return (
-          <div className="flex flex-row items-center gap-1">
-            <img src={issuetype.iconUrl} alt={issuetype.name} width={0} height={0} className="size-5" />
-            <div title={issuetype.description}>{issuetype.name}</div>
-          </div>
-        )
-      }
-    },
-    {
-      accessorFn: (row) => row.fields.labels,
-      header: "Labels",
-      size: 140,
-      cell: ({ getValue }) => {
-        const labels = getValue<string[]>()
-        return labels.map((label) => (
-          <Badge key={label}>{label}</Badge>
-        ))
-      }
-    },
-    {
-      accessorFn: (row) => row.fields.resolution,
-      header: "Resolution",
-      size: 130,
-      cell: ({ getValue }) => {
-        const resolution = getValue<JqlSearchResponse["issues"][number]["fields"]["resolution"]>()
-        return (
-          <div title={resolution?.description}>{resolution?.name}</div>
-        )
-      }
-    },
-    {
-      accessorFn: (row) => row.fields.resolutiondate,
-      header: "Resolved",
-      size: 150,
-      cell: ({ getValue }) => {
-        const value = getValue<string | null>()
-        return value ? new Date(value).toLocaleString() : null
-      }
-    },
-    {
-      accessorFn: (row) => row.fields.versions,
-      header: "Affects Versions",
-      size: 140,
-      cell: ({ getValue }) => {
-        const versions = getValue<JqlSearchResponse["issues"][number]["fields"]["versions"]>()
-        return versions?.map((version) => (
-          <Badge key={version.id} title={version.releaseDate}>{version.name}</Badge>
-        ))
-      }
+      accessorFn: (row) => row.fields.customfield_10070 ?? 0,
+      header: "Votes",
+      size: 75,
+      cell: ({ getValue }) => <div className="text-right">{getValue<number>()}</div>,
     },
     {
       accessorFn: (row) => row.fields.watches.watchCount,
       header: "Watchers",
-      size: 90,
+      size: 75,
+      cell: ({ getValue }) => <div className="text-right">{getValue<number>()}</div>,
     },
+    {
+      accessorFn: (row) => row.fields.customfield_10047,
+      header: "CHK",
+      size: 150,
+      cell: ({ getValue }) => {
+        const value = getValue<string | null>()
+        return value ? new Date(value).toLocaleString() : null
+      },
+    },
+    {
+      accessorFn: (row) => row.fields.customfield_10050,
+      header: "ADO",
+      size: 100,
+    },
+
   ] satisfies ColumnDef<IssueWithConfidence>[], [])
 
   const table = useReactTable({
@@ -556,7 +581,7 @@ function Issue({
         <div>Fix Versions</div> <div className="flex flex-wrap gap-1">
           {activeIssue.fields.fixVersions.map((fixVersion) => (
             <div key={fixVersion.id}>
-              <Badge title={fixVersion.description}>{fixVersion.name}</Badge>
+              <Badge variant="secondary" title={fixVersion.description}>{fixVersion.name}</Badge>
             </div>
           ))}
         </div>
@@ -584,7 +609,7 @@ function Issue({
         <div>Labels</div> <div className="flex flex-wrap gap-1">
           {activeIssue.fields.labels.map((label) => (
             <div key={label}>
-              <Badge>{label}</Badge>
+              <Badge variant="secondary">{label}</Badge>
             </div>
           ))}
         </div>
@@ -598,7 +623,7 @@ function Issue({
         <div>Affects Versions</div> <div className="flex flex-wrap gap-1">
           {activeIssue.fields.versions.map((version) => (
             <div key={version.id}>
-              <Badge>{version.name}</Badge>
+              <Badge variant="secondary">{version.name}</Badge>
             </div>
           ))}
         </div>
