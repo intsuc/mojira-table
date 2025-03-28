@@ -272,7 +272,7 @@ export function App() {
 
   return (
     <>
-      <div className="h-full flex flex-col overflow-y-hidden">
+      <div className="h-full flex flex-col overflow-hidden">
         <div className="col-span-2 p-2 flex flex-row gap-2 border-b">
           <Select value={project} onValueChange={setProject as (value: JqlSearchRequest["project"]) => void}>
             <SelectTrigger className="min-w-[220px]">
@@ -326,7 +326,7 @@ export function App() {
         </div>
 
         <Table>
-          <TableHeader>
+          <TableHeader className="sticky top-0 z-10 bg-background shadow-[0_1px_0_var(--border)]">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
@@ -371,8 +371,8 @@ export function App() {
               </TableCell>
             </TableRow>
             <TableRow className={cn(
-              "absolute inset-x-0 top-0 h-full bg-primary/10 animate-pulse pointer-events-none transition-opacity",
-              isRefetching ? "opacity-100" : "opacity-0",
+              "absolute inset-x-0 top-0 h-full bg-primary/10 animate-pulse pointer-events-none",
+              isRefetching ? "block" : "hidden",
             )}></TableRow>
           </TableBody>
         </Table>
