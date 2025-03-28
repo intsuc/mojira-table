@@ -568,17 +568,40 @@ function Issue({
   return (
     <div className="h-full flex flex-col">
       <div className="grid grid-cols-[10rem_auto] *:py-2 *:border-b">
+        <div>Issue Type</div> <div className="flex flex-row items-center gap-1">
+          <img src={activeIssue.fields.issuetype.iconUrl} alt={activeIssue.fields.issuetype.name} width={0} height={0} className="size-5" />
+          <div title={activeIssue.fields.issuetype.description}>{activeIssue.fields.issuetype.name}</div>
+        </div>
         <div>Created</div> <div>{new Date(activeIssue.fields.created).toLocaleString()}</div>
-        <div>CHK</div> <div>{activeIssue.fields.customfield_10047 ? new Date(activeIssue.fields.customfield_10047).toLocaleString() : null}</div>
-        <div>Game Mode</div> <div>{activeIssue.fields.customfield_10048?.value}</div>
-        <div>Mojang Priority</div> <div>{activeIssue.fields.customfield_10049?.value}</div>
-        <div>ADO</div> <div>{activeIssue.fields.customfield_10050}</div>
-        <div>Area</div> <div>{activeIssue.fields.customfield_10051?.value}</div>
+        <div>Updated</div> <div>{new Date(activeIssue.fields.updated).toLocaleString()}</div>
+        <div>Resolved</div> <div>{activeIssue.fields.resolutiondate ? new Date(activeIssue.fields.resolutiondate).toLocaleString() : null}</div>
+        <div>Resolution</div> <div><div title={activeIssue.fields.resolution?.description}>{activeIssue.fields.resolution?.name}</div></div>
+        <div>Status</div> <div className="flex flex-row items-center gap-1">
+          <img src={activeIssue.fields.status.iconUrl} alt={activeIssue.fields.status.name} width={0} height={0} className="size-4" />
+          <div title={activeIssue.fields.status.description}>{activeIssue.fields.status.name}</div>
+          <div title={activeIssue.fields.status.statusCategory.colorName}>({activeIssue.fields.status.statusCategory.name})</div>
+        </div>
+        <div>Affects Version/s</div> <div className="flex flex-wrap gap-1">
+          {activeIssue.fields.versions.map((version) => (
+            <div key={version.id}>
+              <Badge variant="secondary">{version.name}</Badge>
+            </div>
+          ))}
+        </div>
+        <div>Labels</div> <div className="flex flex-wrap gap-1">
+          {activeIssue.fields.labels.map((label) => (
+            <div key={label}>
+              <Badge variant="secondary">{label}</Badge>
+            </div>
+          ))}
+        </div>
         <div>Confirmation Status</div> <div>{activeIssue.fields.customfield_10054?.value}</div>
         <div>Category</div> <div>{activeIssue.fields.customfield_10055?.map((v) => v.value).join(", ")}</div>
+        <div>Game Mode</div> <div>{activeIssue.fields.customfield_10048?.value}</div>
+        <div>Area</div> <div>{activeIssue.fields.customfield_10051?.value}</div>
+        <div>Mojang Priority</div> <div>{activeIssue.fields.customfield_10049?.value}</div>
         <div>Operating System Version</div> <div>{activeIssue.fields.customfield_10061}</div>
-        <div>Votes Count</div> <div>{activeIssue.fields.customfield_10070 ?? 0}</div>
-        <div>Fix Versions</div> <div className="flex flex-wrap gap-1">
+        <div>Fix Version/s</div> <div className="flex flex-wrap gap-1">
           {activeIssue.fields.fixVersions.map((fixVersion) => (
             <div key={fixVersion.id}>
               <Badge variant="secondary" title={fixVersion.description}>{fixVersion.name}</Badge>
@@ -602,32 +625,10 @@ function Issue({
             )
           })}
         </div>
-        <div>Issue Type</div> <div className="flex flex-row items-center gap-1">
-          <img src={activeIssue.fields.issuetype.iconUrl} alt={activeIssue.fields.issuetype.name} width={0} height={0} className="size-5" />
-          <div title={activeIssue.fields.issuetype.description}>{activeIssue.fields.issuetype.name}</div>
-        </div>
-        <div>Labels</div> <div className="flex flex-wrap gap-1">
-          {activeIssue.fields.labels.map((label) => (
-            <div key={label}>
-              <Badge variant="secondary">{label}</Badge>
-            </div>
-          ))}
-        </div>
-        <div>Resolution</div> <div><div title={activeIssue.fields.resolution?.description}>{activeIssue.fields.resolution?.name}</div></div>
-        <div>Resolved</div> <div>{activeIssue.fields.resolutiondate ? new Date(activeIssue.fields.resolutiondate).toLocaleString() : null}</div>
-        <div>Status</div> <div className="flex flex-row items-center gap-1">
-          <img src={activeIssue.fields.status.iconUrl} alt={activeIssue.fields.status.name} width={0} height={0} className="size-4" />
-          <div title={activeIssue.fields.status.description}>{activeIssue.fields.status.name}</div>
-          <div title={activeIssue.fields.status.statusCategory.colorName}>({activeIssue.fields.status.statusCategory.name})</div>
-        </div>
-        <div>Affects Versions</div> <div className="flex flex-wrap gap-1">
-          {activeIssue.fields.versions.map((version) => (
-            <div key={version.id}>
-              <Badge variant="secondary">{version.name}</Badge>
-            </div>
-          ))}
-        </div>
+        <div>Votes</div> <div>{activeIssue.fields.customfield_10070 ?? 0}</div>
         <div>Watchers</div> <div>{activeIssue.fields.watches.watchCount}</div>
+        <div>CHK</div> <div>{activeIssue.fields.customfield_10047 ? new Date(activeIssue.fields.customfield_10047).toLocaleString() : null}</div>
+        <div>ADO</div> <div>{activeIssue.fields.customfield_10050}</div>
       </div>
 
       <div className="p-8 grid justify-center">
