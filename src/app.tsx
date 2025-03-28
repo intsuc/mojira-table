@@ -98,34 +98,38 @@ export function App() {
     {
       accessorFn: (row) => row.key,
       header: "Key",
+      size: 90,
     },
     {
       accessorFn: (row) => row.fields.summary,
       header: "Summary",
+      size: 400,
     },
     {
       id: "Created",
       accessorFn: (row) => row.fields.created,
       header: ColumnMenu,
+      size: 150,
       cell: ({ getValue }) => new Date(getValue<string>()).toLocaleString(),
     },
     {
       id: "Updated",
       accessorFn: (row) => row.fields.updated,
       header: ColumnMenu,
+      size: 150,
       cell: ({ getValue }) => new Date(getValue<string>()).toLocaleString(),
     },
     {
       id: "Status",
       accessorFn: (row) => row.fields.status,
       header: StatusColumnMenu,
+      size: 105,
       cell: ({ getValue }) => {
         const status = getValue<JqlSearchResponse["issues"][number]["fields"]["status"]>()
         return (
           <div className="flex flex-row items-center gap-1">
             <img src={status.iconUrl} alt={status.name} width={0} height={0} className="size-4" />
             <div title={status.description}>{status.name}</div>
-            <div title={status.statusCategory.colorName}>({status.statusCategory.name})</div>
           </div>
         )
       }
@@ -133,6 +137,7 @@ export function App() {
     {
       accessorFn: (row) => row.fields.customfield_10047,
       header: "CHK",
+      size: 150,
       cell: ({ getValue }) => {
         const value = getValue<string | null>()
         return value ? new Date(value).toLocaleString() : null
@@ -141,26 +146,32 @@ export function App() {
     {
       accessorFn: (row) => row.fields.customfield_10048?.value,
       header: "Game Mode",
+      size: 100,
     },
     {
       accessorFn: (row) => row.fields.customfield_10049?.value,
       header: "Mojang Priority",
+      size: 100,
     },
     {
       accessorFn: (row) => row.fields.customfield_10050,
       header: "ADO",
+      size: 100,
     },
     {
       accessorFn: (row) => row.fields.customfield_10051?.value,
       header: "Area",
+      size: 100,
     },
     {
       accessorFn: (row) => row.fields.customfield_10054?.value,
       header: "Confirmation Status",
+      size: 100,
     },
     {
       accessorFn: (row) => row.fields.customfield_10055,
       header: "Category",
+      size: 100,
       cell: ({ getValue }) => {
         const categories = getValue<JqlSearchResponse["issues"][number]["fields"]["customfield_10055"]>()
         return categories?.map((category) => (
@@ -171,14 +182,17 @@ export function App() {
     {
       accessorFn: (row) => row.fields.customfield_10061,
       header: "Operating System Version",
+      size: 100,
     },
     {
       accessorFn: (row) => row.fields.customfield_10070 ?? 0,
       header: "Votes Count",
+      size: 100,
     },
     {
       accessorFn: (row) => row.fields.fixVersions,
       header: "Fix Versions",
+      size: 140,
       cell: ({ getValue }) => {
         const fixVersions = getValue<JqlSearchResponse["issues"][number]["fields"]["fixVersions"]>()
         return fixVersions?.map((fixVersion) => (
@@ -193,6 +207,7 @@ export function App() {
     {
       accessorFn: (row) => row.fields.issuetype,
       header: "Issue Type",
+      size: 90,
       cell: ({ getValue }) => {
         const issuetype = getValue<JqlSearchResponse["issues"][number]["fields"]["issuetype"]>()
         return (
@@ -206,6 +221,7 @@ export function App() {
     {
       accessorFn: (row) => row.fields.labels,
       header: "Labels",
+      size: 140,
       cell: ({ getValue }) => {
         const labels = getValue<string[]>()
         return labels.map((label) => (
@@ -216,6 +232,7 @@ export function App() {
     {
       accessorFn: (row) => row.fields.resolution,
       header: "Resolution",
+      size: 130,
       cell: ({ getValue }) => {
         const resolution = getValue<JqlSearchResponse["issues"][number]["fields"]["resolution"]>()
         return (
@@ -226,6 +243,7 @@ export function App() {
     {
       accessorFn: (row) => row.fields.resolutiondate,
       header: "Resolved",
+      size: 150,
       cell: ({ getValue }) => {
         const value = getValue<string | null>()
         return value ? new Date(value).toLocaleString() : null
@@ -234,6 +252,7 @@ export function App() {
     {
       accessorFn: (row) => row.fields.versions,
       header: "Affects Versions",
+      size: 140,
       cell: ({ getValue }) => {
         const versions = getValue<JqlSearchResponse["issues"][number]["fields"]["versions"]>()
         return versions?.map((version) => (
@@ -244,8 +263,9 @@ export function App() {
     {
       accessorFn: (row) => row.fields.watches.watchCount,
       header: "Watchers",
+      size: 90,
     },
-  ], [])
+  ] satisfies ColumnDef<IssueWithConfidence>[], [])
 
   const table = useReactTable({
     data: issues,
@@ -334,7 +354,14 @@ export function App() {
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      style={{
+                        minWidth: header.getSize(),
+                        maxWidth: header.getSize(),
+                      }}
+                      className="truncate"
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -355,7 +382,14 @@ export function App() {
                 onClick={() => setActiveIssue(row.original)}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell
+                    key={cell.id}
+                    style={{
+                      minWidth: cell.column.getSize(),
+                      maxWidth: cell.column.getSize(),
+                    }}
+                    className="truncate"
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
