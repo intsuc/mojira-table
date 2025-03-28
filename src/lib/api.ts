@@ -241,5 +241,5 @@ export async function jqlSearchPost(request: JqlSearchRequest, signal?: AbortSig
     body: JSON.stringify(request),
     signal,
   })
-  return response.json()
+  return response.json() as Promise<JqlSearchResponse>
 }
