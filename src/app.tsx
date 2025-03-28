@@ -68,7 +68,13 @@ export function App() {
       return issues
     },
     initialPageParam: 0,
-    getNextPageParam: (_lastPage, _allPages, lastPageParam) => lastPageParam + 1,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+      if (lastPage.length < maxResults) {
+        return undefined
+      } else {
+        return lastPageParam + 1
+      }
+    },
     enabled: project !== undefined,
   })
   const issues: IssueWithConfidence[] = useMemo(
