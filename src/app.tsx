@@ -1,5 +1,5 @@
-import { filters, jqlSearchPost, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
-import { type ColumnDef, flexRender, getCoreRowModel, getSortedRowModel, type HeaderContext, type SortingState, useReactTable } from "@tanstack/react-table"
+import { jqlSearchPost, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
+import { type ColumnDef, type ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type HeaderContext, type SortingState, useReactTable } from "@tanstack/react-table"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -25,12 +25,12 @@ type IssueWithConfidence = (
   & { enConfidence: number | undefined }
 )
 
-type QueryKey = readonly [JqlSearchRequest["project"], JqlSearchRequest["filter"], SortingState, JqlSearchRequest["advanced"], JqlSearchRequest["search"], boolean]
+type QueryKey = readonly [JqlSearchRequest["project"], SortingState, ColumnFiltersState, JqlSearchRequest["advanced"], JqlSearchRequest["search"], boolean]
 
 const queryFn: QueryFunction<IssueWithConfidence[], QueryKey, number> = async ({
   pageParam,
   signal,
-  queryKey: [project, filter, sorting, advanced, search, hideNonEnglishIssues],
+  queryKey: [project, sorting, columnFilters, advanced, search, hideNonEnglishIssues],
 }): Promise<IssueWithConfidence[]> => {
   const sortId = sorting[0]?.id
   const sortField = sortId === "Created" ? "created"
@@ -39,8 +39,10 @@ const queryFn: QueryFunction<IssueWithConfidence[], QueryKey, number> = async ({
         : "created"
   const sortAsc = sorting[0]?.desc === false
 
+  const filter = columnFilters.find((filter) => filter.id === "Status")?.value as "open" | undefined ?? "all"
+
   const response = await jqlSearchPost({
-    project: project!,
+    project,
     filter,
     sortField,
     sortAsc,
@@ -72,24 +74,19 @@ const queryFn: QueryFunction<IssueWithConfidence[], QueryKey, number> = async ({
 export function App() {
   const [hideNonEnglishIssues, setHideNonEnglishIssues] = useState(false)
 
-  const [project, setProject] = useState<JqlSearchRequest["project"] | undefined>(undefined)
-  const [filter, setFilter] = useState<JqlSearchRequest["filter"]>("all")
+  const [project, setProject] = useState<JqlSearchRequest["project"]>("MC")
   const [sorting, setSorting] = useState<SortingState>([{ id: "Created", desc: true }])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [advanced, setAdvanced] = useState<JqlSearchRequest["advanced"]>(false)
   const [search, setSearch] = useState<JqlSearchRequest["search"]>("")
 
   const { data, fetchNextPage, hasNextPage, isFetching } = useInfiniteQuery({
-    queryKey: [project!, filter, sorting, advanced, search, hideNonEnglishIssues],
+    enabled: project !== undefined,
+    queryKey: [project!, sorting, columnFilters, advanced, search, hideNonEnglishIssues],
     queryFn,
     initialPageParam: 0,
-    getNextPageParam: (lastPage, _allPages, lastPageParam) => {
-      if (lastPage.length < maxResults) {
-        return undefined
-      } else {
-        return lastPageParam + 1
-      }
-    },
-    enabled: project !== undefined,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
+      lastPage.length < maxResults ? undefined : lastPageParam + 1,
   })
   const issues: IssueWithConfidence[] = useMemo(
     () => data?.pages.flatMap((page) => page) ?? [],
@@ -108,19 +105,19 @@ export function App() {
     {
       id: "Created",
       accessorFn: (row) => row.fields.created,
-      header: Sorter,
+      header: ColumnMenu,
       cell: ({ getValue }) => new Date(getValue<string>()).toLocaleString(),
     },
     {
       id: "Updated",
       accessorFn: (row) => row.fields.updated,
-      header: Sorter,
+      header: ColumnMenu,
       cell: ({ getValue }) => new Date(getValue<string>()).toLocaleString(),
     },
     {
       id: "Status",
       accessorFn: (row) => row.fields.status,
-      header: Sorter,
+      header: StatusColumnMenu,
       cell: ({ getValue }) => {
         const status = getValue<JqlSearchResponse["issues"][number]["fields"]["status"]>()
         return (
@@ -256,8 +253,12 @@ export function App() {
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     manualSorting: true,
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(),
+    manualFiltering: true,
     state: {
       sorting,
+      columnFilters,
     },
   })
 
@@ -271,8 +272,19 @@ export function App() {
     <>
       <div className="h-full flex flex-col overflow-y-hidden">
         <div className="col-span-2 p-2 flex flex-row gap-2 border-b">
-          <EnumSelect className="min-w-[220px]" label="Project" value={project} onValueChange={setProject} values={projects} />
-          <EnumSelect className="min-w-[90px]" label="Filter" value={filter} onValueChange={setFilter} values={filters} />
+          <Select value={project} onValueChange={setProject as (value: JqlSearchRequest["project"]) => void}>
+            <SelectTrigger className="min-w-[220px]">
+              <SelectValue placeholder="Project" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Project</SelectLabel>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>{project.label}</SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
           <div className="flex items-center space-x-2">
             <Switch id="advanced" checked={advanced} onCheckedChange={setAdvanced} />
             <Label htmlFor="advanced">Advanced</Label>
@@ -411,7 +423,7 @@ export function App() {
   )
 }
 
-function Sorter<T>({ header, column }: HeaderContext<T, unknown>) {
+function ColumnMenu<T>({ header, column }: HeaderContext<T, unknown>) {
   const direction = column.getIsSorted() || "none"
 
   return (
@@ -441,33 +453,46 @@ function Sorter<T>({ header, column }: HeaderContext<T, unknown>) {
   )
 }
 
-function EnumSelect<T extends { id: string, label: string }>({
-  label,
-  value,
-  onValueChange,
-  values,
-  className,
-}: {
-  label: string,
-  value: T["id"] | undefined,
-  onValueChange: (value: T["id"]) => void,
-  values: readonly T[],
-  className?: string,
-}) {
+function StatusColumnMenu<T>({ header, column }: HeaderContext<T, unknown>) {
+  const direction = column.getIsSorted() || "none"
+  const filter = column.getIsFiltered() ? "open" : "all"
+
   return (
-    <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className={className}>
-        <SelectValue placeholder={label} />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectGroup>
-          <SelectLabel>{label}</SelectLabel>
-          {values.map((item) => (
-            <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>
-          ))}
-        </SelectGroup>
-      </SelectContent>
-    </Select>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost">
+          {header.id}
+          {direction === "none" ? <ArrowDown className="text-muted-foreground" /> : direction === "desc" ? <ArrowDown10 /> : <ArrowDown01 />}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56">
+        <DropdownMenuLabel>{header.id}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuRadioGroup value={direction} onValueChange={(value) => {
+          if (value === "none") {
+            column.clearSorting()
+          } else {
+            column.toggleSorting(value === "desc")
+          }
+        }}>
+          <DropdownMenuRadioItem value="none"><ArrowDown />None</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="desc"><ArrowDown10 />Descending</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="asc"><ArrowDown01 />Ascending</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuRadioGroup value={filter} onValueChange={(value) => {
+          if (value === "all") {
+            column.setFilterValue(undefined)
+          } else {
+            column.clearSorting()
+            column.setFilterValue("open")
+          }
+        }}>
+          <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="open">Open</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 

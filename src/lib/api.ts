@@ -7,15 +7,9 @@ export const projects = [
   { id: "WEB", label: "Mojang Web Services" },
 ] as const
 
-export const filters = [
-  { id: "all", label: "All" },
-  { id: "open", label: "Open" },
-  { id: "done", label: "Done" },
-] as const
-
 export type JqlSearchRequest = {
   project: typeof projects[number]["id"],
-  filter: typeof filters[number]["id"],
+  filter: "all" | "open" | "done",
   sortField: "created" | "updated" | "priority" | "status",
   sortAsc: boolean,
   advanced: boolean,
