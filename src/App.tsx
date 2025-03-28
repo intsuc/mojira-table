@@ -24,7 +24,7 @@ type IssueWithConfidence = (
   & { enConfidence: number | undefined }
 )
 
-export default function Page() {
+export function App() {
   const [hideNonEnglishIssues, setHideNonEnglishIssues] = useState(false)
 
   const [project, setProject] = useState<JqlSearchRequest["project"] | undefined>(undefined)
