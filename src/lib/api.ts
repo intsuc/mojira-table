@@ -81,7 +81,7 @@ export type JqlSearchResponse = {
       customfield_10070: number | null,
       created: string,
       customfield_10061: null,
-      customfield_10050: null,
+      customfield_10050: string | null,
       customfield_10051: {
         self: string
         value: string,
@@ -106,7 +106,7 @@ export type JqlSearchResponse = {
         self: string,
         value: string,
         id: string,
-      }[],
+      }[] | null,
       resolution: {
         self: string,
         id: string,

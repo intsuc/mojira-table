@@ -19,10 +19,10 @@ import { useState } from "react"
 
 const maxResults = 25
 
-type IssuesWithConfidence = (
+type IssueWithConfidence = (
   & JqlSearchResponse["issues"][number]
   & { enConfidence: number | undefined }
-)[]
+)
 
 export default function Page() {
   const [hideNonEnglishIssues, setHideNonEnglishIssues] = useState(false)
@@ -36,7 +36,7 @@ export default function Page() {
 
   const { data, fetchNextPage, hasNextPage, isFetching } = useInfiniteQuery({
     queryKey: [project, filter, sortField, sortAsc, advanced, search, hideNonEnglishIssues],
-    queryFn: async ({ pageParam, signal }): Promise<IssuesWithConfidence> => {
+    queryFn: async ({ pageParam, signal }): Promise<IssueWithConfidence[]> => {
       const response = await jqlSearchPost({
         project: project!,
         filter,
@@ -49,7 +49,7 @@ export default function Page() {
         isForge: false,
         workspaceId: "",
       }, signal)
-      const issues = response.issues as IssuesWithConfidence
+      const issues = response.issues as IssueWithConfidence[]
       if (hideNonEnglishIssues) {
         const languageDetector = await createLanguageDetector()
         if (languageDetector !== undefined) {
@@ -129,7 +129,7 @@ export default function Page() {
 
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={20} className="overflow-y-hidden">
-          <div className="h-full flex flex-col overflow-y-scroll [scrollbar-width:thin] divide-y">
+          <div className="h-full flex flex-col overflow-y-scroll divide-y">
             {issues.map((issue) => (
               <div
                 key={issue.key}
@@ -159,7 +159,7 @@ export default function Page() {
         <ResizableHandle />
         <ResizablePanel className="overflow-y-hidden">
           {activeIssue ? (
-            <div className="p-4 w-full h-full overflow-x-hidden overflow-y-scroll [scrollbar-width:thin]">
+            <div className="p-4 w-full h-full overflow-x-hidden overflow-y-scroll">
               <div>{activeIssue.key}</div>
               <div className="text-2xl font-bold">{activeIssue.fields.summary}</div>
 
