@@ -324,7 +324,7 @@ export function App() {
           <ThemeToggle />
         </div>
 
-        <Table>
+        <Table className="overscroll-none">
           <TableHeader className="sticky top-0 z-10 bg-background shadow-[0_1px_0_var(--border)]">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
