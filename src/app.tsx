@@ -11,12 +11,13 @@ import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { useInfiniteQuery, type QueryFunction } from "@tanstack/react-query"
+import { keepPreviousData, useInfiniteQuery, type QueryFunction } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
 import { createLanguageDetector } from "@/lib/store"
 import { ArrowDown, ArrowDown01, ArrowDown10, Loader2, Menu } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Content } from "@/components/content"
+import { cn } from "./lib/utils"
 
 const maxResults = 25
 
@@ -80,13 +81,14 @@ export function App() {
   const [advanced, setAdvanced] = useState<JqlSearchRequest["advanced"]>(false)
   const [search, setSearch] = useState<JqlSearchRequest["search"]>("")
 
-  const { data, fetchNextPage, hasNextPage, isFetching } = useInfiniteQuery({
+  const { data, fetchNextPage, hasNextPage, isFetching, isRefetching } = useInfiniteQuery({
     enabled: project !== undefined,
     queryKey: [project!, sorting, columnFilters, advanced, search, hideNonEnglishIssues],
     queryFn,
     initialPageParam: 0,
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.length < maxResults ? undefined : lastPageParam + 1,
+    placeholderData: keepPreviousData,
   })
   const issues: IssueWithConfidence[] = useMemo(
     () => data?.pages.flatMap((page) => page) ?? [],
@@ -342,7 +344,7 @@ export function App() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="relative">
             {table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}
@@ -368,6 +370,10 @@ export function App() {
                 </Button>
               </TableCell>
             </TableRow>
+            <TableRow className={cn(
+              "absolute inset-x-0 top-0 h-full bg-primary/10 animate-pulse pointer-events-none transition-opacity",
+              isRefetching ? "opacity-100" : "opacity-0",
+            )}></TableRow>
           </TableBody>
         </Table>
       </div>
