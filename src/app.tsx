@@ -1,6 +1,7 @@
 import { jqlSearchPost, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
 import { type ColumnDef, type ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type HeaderContext, type Row, type RowData, type SortingState, useReactTable } from "@tanstack/react-table"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -14,7 +15,7 @@ import { Switch } from "@/components/ui/switch"
 import { keepPreviousData, useInfiniteQuery, type QueryFunction } from "@tanstack/react-query"
 import { memo, useEffect, useMemo, useRef, useState } from "react"
 import { createLanguageDetector } from "@/lib/store"
-import { ArrowDown, ArrowDown01, ArrowDown10 } from "lucide-react"
+import { AlertCircle, ArrowDown, ArrowDown01, ArrowDown10, CircleSlash2 } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "./lib/utils"
 import { useLocalStorageState } from "@/hooks/use-local-storage-state"
@@ -96,14 +97,17 @@ export function App() {
     hasNextPage,
     isFetching,
     isFetchingNextPage,
+    isError,
+    failureReason,
   } = useInfiniteQuery({
     queryKey: [project, sorting, columnFilters, advanced, search, hideNonEnglishIssues],
     queryFn,
     initialPageParam: 0,
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
-      lastPage.length < maxResults ? undefined : lastPageParam + 1,
+      lastPage?.length < maxResults ? undefined : lastPageParam + 1,
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
+    retry: false,
   })
   const issues: IssueWithConfidence[] = useMemo(
     () => data?.pages.flatMap((page) => page) ?? [],
@@ -442,10 +446,25 @@ export function App() {
               height: `${rowVirtualizer.getTotalSize()}px`,
             }}
           >
-            {!isFetching && issues.length === 0 ? (
+            {issues.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={0} className="relative h-20 flex items-center">
-                  <div className="text-muted-foreground sticky left-1/2 -translate-x-1/2">No issues found</div>
+                <TableCell colSpan={0} className="relative flex items-center">
+                  <div className="sticky left-1/2 -translate-x-1/2">
+                    {isError ? (
+                      <Alert variant="destructive">
+                        <AlertCircle className="size-4" />
+                        <AlertTitle>Error</AlertTitle>
+                        <AlertDescription>
+                          {failureReason?.message}
+                        </AlertDescription>
+                      </Alert>
+                    ) : !isFetching ? (
+                      <Alert>
+                        <CircleSlash2 className="size-4" />
+                        <AlertTitle>No issues found</AlertTitle>
+                      </Alert>
+                    ) : null}
+                  </div>
                 </TableCell>
               </TableRow>
             ) : virtualItems.map((virtualRow) => (

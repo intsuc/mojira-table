@@ -228,5 +228,9 @@ export async function jqlSearchPost(request: JqlSearchRequest, signal?: AbortSig
     body: JSON.stringify(request),
     signal,
   })
-  return response.json() as Promise<JqlSearchResponse>
+  if (response.ok) {
+    return response.json() as Promise<JqlSearchResponse>
+  } else {
+    throw new Error(response.statusText)
+  }
 }
