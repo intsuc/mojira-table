@@ -16,9 +16,9 @@ import { useMemo, useState } from "react"
 import { createLanguageDetector } from "@/lib/store"
 import { ArrowDown, ArrowDown01, ArrowDown10, Loader2 } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { Content } from "@/components/content"
 import { cn } from "./lib/utils"
 import { useLocalStorageState } from "@/hooks/use-local-storage-state"
+import { Issue } from "@/components/issue"
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -467,7 +467,7 @@ export function App() {
               <DrawerDescription></DrawerDescription>
             </DrawerHeader>
             <div className="px-6 h-full overflow-y-auto">
-              {activeIssue ? <Issue activeIssue={activeIssue} /> : null}
+              {activeIssue ? <Issue issue={activeIssue} /> : null}
             </div>
           </DrawerContent>
         </Drawer>
@@ -490,7 +490,7 @@ export function App() {
               <DialogDescription></DialogDescription>
             </DialogHeader>
             <div className="h-full overflow-y-auto">
-              {activeIssue ? <Issue activeIssue={activeIssue} /> : null}
+              {activeIssue ? <Issue issue={activeIssue} /> : null}
             </div>
           </DialogContent>
         </Dialog>
@@ -591,87 +591,5 @@ function EnglishConfidenceMenu<T>({ table, header }: HeaderContext<T, unknown>) 
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
-}
-
-function Issue({
-  activeIssue,
-}: {
-  activeIssue: IssueWithConfidence,
-}) {
-  return (
-    <div className="h-full flex flex-col">
-      <div className="grid grid-cols-[10rem_auto] *:py-2 *:border-b">
-        <div>Issue Type</div> <div className="flex flex-row items-center gap-1">
-          <img src={activeIssue.fields.issuetype.iconUrl} alt={activeIssue.fields.issuetype.name} width={0} height={0} className="size-5" />
-          <div title={activeIssue.fields.issuetype.description}>{activeIssue.fields.issuetype.name}</div>
-        </div>
-        <div>Created</div> <div>{new Date(activeIssue.fields.created).toLocaleString()}</div>
-        <div>Updated</div> <div>{new Date(activeIssue.fields.updated).toLocaleString()}</div>
-        <div>Resolved</div> <div>{activeIssue.fields.resolutiondate ? new Date(activeIssue.fields.resolutiondate).toLocaleString() : null}</div>
-        <div>Resolution</div> <div><div title={activeIssue.fields.resolution?.description}>{activeIssue.fields.resolution?.name}</div></div>
-        <div>Status</div> <div className="flex flex-row items-center gap-1">
-          <img src={activeIssue.fields.status.iconUrl} alt={activeIssue.fields.status.name} width={0} height={0} className="size-4" />
-          <div title={activeIssue.fields.status.description}>{activeIssue.fields.status.name}</div>
-          <div title={activeIssue.fields.status.statusCategory.colorName}>({activeIssue.fields.status.statusCategory.name})</div>
-        </div>
-        <div>Affects Version/s</div> <div className="flex flex-wrap gap-1">
-          {activeIssue.fields.versions.map((version) => (
-            <div key={version.id}>
-              <Badge variant="secondary">{version.name}</Badge>
-            </div>
-          ))}
-        </div>
-        <div>Labels</div> <div className="flex flex-wrap gap-1">
-          {activeIssue.fields.labels.map((label) => (
-            <div key={label}>
-              <Badge variant="secondary">{label}</Badge>
-            </div>
-          ))}
-        </div>
-        <div>Confirmation Status</div> <div>{activeIssue.fields.customfield_10054?.value}</div>
-        <div>Category</div> <div>{activeIssue.fields.customfield_10055?.map((v) => v.value).join(", ")}</div>
-        <div>Game Mode</div> <div>{activeIssue.fields.customfield_10048?.value}</div>
-        <div>Area</div> <div>{activeIssue.fields.customfield_10051?.value}</div>
-        <div>Mojang Priority</div> <div>{activeIssue.fields.customfield_10049?.value}</div>
-        <div>Operating System Version</div> <div>{activeIssue.fields.customfield_10061}</div>
-        <div>Fix Version/s</div> <div className="flex flex-wrap gap-1">
-          {activeIssue.fields.fixVersions.map((fixVersion) => (
-            <div key={fixVersion.id}>
-              <Badge variant="secondary" title={fixVersion.description}>{fixVersion.name}</Badge>
-            </div>
-          ))}
-        </div>
-        <div>Linked Issues</div> <div className="flex flex-col">
-          {activeIssue.fields.issuelinks.map((issuelink) => {
-            // TODO: status and issuetype
-            const issue = (issuelink.inwardIssue ?? issuelink.outwardIssue)!
-            return (
-              <div key={issuelink.id} className="flex gap-1">
-                <div>{issuelink.type.name}:</div>
-                <div>{issuelink.inwardIssue ? issuelink.type.inward : null}{issuelink.outwardIssue ? issuelink.type.outward : null}</div>
-                <div className="flex flex-row items-center gap-1">
-                  <img src={issue.fields.issuetype.iconUrl} alt={issue.fields.issuetype.name} title={issue.fields.issuetype.description} width={0} height={0} className="size-4" />
-                  <div className="font-bold">{issue.key}</div>
-                  <div>{issue.fields.summary}</div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-        <div>Votes</div> <div>{activeIssue.fields.customfield_10070 ?? 0}</div>
-        <div>Watchers</div> <div>{activeIssue.fields.watches.watchCount}</div>
-        <div>CHK</div> <div>{activeIssue.fields.customfield_10047 ? new Date(activeIssue.fields.customfield_10047).toLocaleString() : null}</div>
-        <div>ADO</div> <div>{activeIssue.fields.customfield_10050}</div>
-      </div>
-
-      <div className="p-8 grid justify-center">
-        <div className="prose prose-zinc dark:prose-invert">
-          {activeIssue.fields.description !== null ? (
-            <Content content={activeIssue.fields.description} />
-          ) : null}
-        </div>
-      </div>
-    </div>
   )
 }
