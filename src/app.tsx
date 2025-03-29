@@ -18,6 +18,7 @@ import { ArrowDown, ArrowDown01, ArrowDown10, Loader2 } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Content } from "@/components/content"
 import { cn } from "./lib/utils"
+import { useLocalStorageState } from "@/hooks/use-local-storage-state"
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -81,13 +82,12 @@ const queryFn: QueryFunction<IssueWithConfidence[], QueryKey, number> = async ({
 }
 
 export function App() {
-  const [hideNonEnglishIssues, setHideNonEnglishIssues] = useState(false)
-
-  const [project, setProject] = useState<JqlSearchRequest["project"]>("MC")
-  const [sorting, setSorting] = useState<SortingState>([{ id: "Created", desc: true }])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [advanced, setAdvanced] = useState<JqlSearchRequest["advanced"]>(false)
-  const [search, setSearch] = useState<JqlSearchRequest["search"]>("")
+  const [project, setProject] = useLocalStorageState<JqlSearchRequest["project"]>("project", "MC", (x) => x, (x) => x as JqlSearchRequest["project"])
+  const [sorting, setSorting] = useLocalStorageState<SortingState>("sorting", [{ id: "Created", desc: true }])
+  const [columnFilters, setColumnFilters] = useLocalStorageState<ColumnFiltersState>("columnFilters", [])
+  const [advanced, setAdvanced] = useLocalStorageState<JqlSearchRequest["advanced"]>("advanced", false, (x) => x.toString(), (x) => x === "true")
+  const [search, setSearch] = useLocalStorageState<JqlSearchRequest["search"]>("search", "", (x) => x, (x) => x)
+  const [hideNonEnglishIssues, setHideNonEnglishIssues] = useLocalStorageState("hideNonEnglishIssues", false, (x) => x.toString(), (x) => x === "true")
 
   const {
     data,
