@@ -1,4 +1,5 @@
 import type { Content } from "@/lib/api"
+import { Badge } from "./ui/badge"
 
 export function Content({
   content,
@@ -43,12 +44,16 @@ export function Content({
           return <h6><Contents contents={content.content} /></h6>
         }
       }
+      break
     }
     case "inlineCard": {
       return <a href={content.attrs.url}>{content.attrs.url}</a>
     }
     case "listItem": {
       return <li><Contents contents={content.content} /></li>
+    }
+    case "mention": {
+      return <Badge variant="secondary">{content.attrs.text}</Badge>
     }
     case "orderedList": {
       // TODO: check `content.attrs.order`
