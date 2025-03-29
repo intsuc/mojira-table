@@ -449,11 +449,10 @@ export function App() {
       </div>
 
       {isMobile ? (
-        <Drawer open={activeIssue !== undefined} onOpenChange={(open) => {
-          if (!open) {
-            setActiveIssue(undefined)
-          }
-        }}>
+        <Drawer
+          open={activeIssue !== undefined}
+          onOpenChange={(open) => { if (!open) { setActiveIssue(undefined) } }}
+        >
           <DrawerContent>
             <DrawerHeader className="text-left">
               <DrawerTitle>
@@ -472,12 +471,11 @@ export function App() {
           </DrawerContent>
         </Drawer>
       ) : (
-        <Dialog open={activeIssue !== undefined} onOpenChange={(open) => {
-          if (!open) {
-            setActiveIssue(undefined)
-          }
-        }}>
-          <DialogContent>
+        <Dialog
+          open={activeIssue !== undefined}
+          onOpenChange={(open) => { if (!open) { setActiveIssue(undefined) } }}
+        >
+          <DialogContent className="grid-rows-[auto_1fr]">
             <DialogHeader>
               <DialogTitle>
                 {activeIssue !== undefined ? (
