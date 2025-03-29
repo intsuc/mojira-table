@@ -1,5 +1,5 @@
 import { jqlSearchPost, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
-import { type ColumnDef, type ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type HeaderContext, type RowData, type SortingState, useReactTable } from "@tanstack/react-table"
+import { type ColumnDef, type ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type HeaderContext, type Row, type RowData, type SortingState, useReactTable } from "@tanstack/react-table"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -12,13 +12,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { keepPreviousData, useInfiniteQuery, type QueryFunction } from "@tanstack/react-query"
-import { useMemo, useState } from "react"
+import { memo, useEffect, useMemo, useRef, useState } from "react"
 import { createLanguageDetector } from "@/lib/store"
-import { ArrowDown, ArrowDown01, ArrowDown10, Loader2 } from "lucide-react"
+import { ArrowDown, ArrowDown01, ArrowDown10 } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "./lib/utils"
 import { useLocalStorageState } from "@/hooks/use-local-storage-state"
 import { Issue } from "@/components/issue"
+import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual"
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -101,6 +102,7 @@ export function App() {
     initialPageParam: 0,
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.length < maxResults ? undefined : lastPageParam + 1,
+    refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
   })
   const issues: IssueWithConfidence[] = useMemo(
@@ -335,11 +337,30 @@ export function App() {
     },
   })
 
-  const [activeIssue, setActiveIssue] = useState<IssueWithConfidence | undefined>(undefined)
+  const { rows } = table.getRowModel()
 
-  console.log(activeIssue)
+  const [activeIssue, setActiveIssue] = useState<IssueWithConfidence | undefined>(undefined)
+  // console.log(activeIssue)
 
   const isMobile = useIsMobile()
+
+  const parentRef = useRef<HTMLTableElement>(null)
+
+  const rowVirtualizer = useVirtualizer({
+    count: issues.length + (hasNextPage ? maxResults : 0),
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 40,
+    measureElement: () => 40,
+    overscan: 0,
+  })
+
+  const virtualItems = rowVirtualizer.getVirtualItems()
+  useEffect(() => {
+    const lastItem = virtualItems[virtualItems.length - 1]
+    if (lastItem !== undefined && lastItem.index >= issues.length - 1 && hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage()
+    }
+  }, [hasNextPage, fetchNextPage, issues.length, isFetchingNextPage, virtualItems])
 
   return (
     <>
@@ -383,9 +404,9 @@ export function App() {
           <ThemeToggle />
         </div>
 
-        <Table className="overflow-clip">
+        <Table ref={parentRef} className="flex-1 grid grid-rows-[auto_1fr] overflow-scroll overscroll-none">
           <TableHeader className={cn(
-            "sticky top-0 z-10 bg-background shadow-[0_1px_0_var(--border)] after:transition-opacity after:content-[''] after:absolute after:bottom-0 after:w-full after:h-0.5 after:bg-blue-500 after:animate-indeterminate after:origin-left",
+            "grid sticky top-0 z-10 overflow-x-clip bg-background shadow-[0_1px_0_var(--border)] after:transition-opacity after:content-[''] after:absolute after:bottom-0 after:w-full after:h-0.5 after:bg-blue-500 after:animate-indeterminate after:origin-left",
             isFetching ? "after:opacity-100" : "after:opacity-0",
           )}>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -412,39 +433,26 @@ export function App() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className="relative">
-            {table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-                onClick={() => setActiveIssue(row.original)}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    style={{
-                      minWidth: cell.column.getSize(),
-                      maxWidth: cell.column.getSize(),
-                    }}
-                    className="truncate"
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+          <TableBody
+            className="grid relative before:content-[''] before:absolute before:inset-0 before:bg-primary/10 before:animate-pulse"
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+            }}
+          >
+            {issues.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={0} className="relative h-20 flex items-center">
+                  <div className="text-muted-foreground sticky left-1/2 -translate-x-1/2">No issues found</div>
+                </TableCell>
               </TableRow>
+            ) : virtualItems.map((virtualRow) => (
+              <IssueRow
+                key={virtualRow.index}
+                row={rows[virtualRow.index]}
+                virtualRow={virtualRow}
+                onClickIssue={setActiveIssue}
+              />
             ))}
-            <TableRow>
-              <TableCell colSpan={columns.length}>
-                <Button
-                  variant="ghost"
-                  disabled={!hasNextPage || isFetchingNextPage}
-                  onClick={() => void fetchNextPage()}
-                  className="sticky left-2"
-                >
-                  {isFetchingNextPage ? <><Loader2 className="animate-spin" />Loading...</> : hasNextPage ? "Load more" : "No more issues"}
-                </Button>
-              </TableCell>
-            </TableRow>
           </TableBody>
         </Table>
       </div>
@@ -504,6 +512,53 @@ export function App() {
     </>
   )
 }
+
+const IssueRow = memo(function IssueRow({
+  row,
+  virtualRow,
+  onClickIssue,
+}: {
+  row: Row<IssueWithConfidence> | undefined,
+  virtualRow: VirtualItem,
+  onClickIssue: (issue: IssueWithConfidence) => void,
+}) {
+  return row !== undefined ? (
+    <TableRow
+      data-index={virtualRow.index}
+      data-state={row.getIsSelected() && "selected"}
+      onClick={() => onClickIssue(row.original)}
+      style={{
+        height: `${virtualRow.size}px`,
+        transform: `translateY(${virtualRow.start}px)`,
+      }}
+      className="absolute top-0 left-0 w-full truncate bg-background hover:bg-accent "
+    >
+      {row.getVisibleCells().map((cell) => (
+        <TableCell
+          key={cell.id}
+          style={{
+            minWidth: cell.column.getSize(),
+            maxWidth: cell.column.getSize(),
+          }}
+          className="truncate"
+        >
+          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+        </TableCell>
+      ))}
+    </TableRow>
+  ) : (
+    <TableRow
+      key={virtualRow.index}
+      style={{
+        height: `${virtualRow.size}px`,
+        transform: `translateY(${virtualRow.start}px)`,
+      }}
+      className="absolute top-0 left-0 w-full truncate"
+    >
+      <TableCell colSpan={0} className="p-0 h-full flex"></TableCell>
+    </TableRow>
+  )
+})
 
 function ColumnMenu<T>({ header, column }: HeaderContext<T, unknown>) {
   const direction = column.getIsSorted() || "none"
