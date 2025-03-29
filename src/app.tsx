@@ -336,16 +336,9 @@ export function App() {
       setHideNonEnglishIssues,
     },
   })
-
   const { rows } = table.getRowModel()
 
-  const [activeIssue, setActiveIssue] = useState<IssueWithConfidence | undefined>(undefined)
-  // console.log(activeIssue)
-
-  const isMobile = useIsMobile()
-
   const parentRef = useRef<HTMLTableElement>(null)
-
   const rowVirtualizer = useVirtualizer({
     count: issues.length + (hasNextPage ? maxResults : 0),
     getScrollElement: () => parentRef.current,
@@ -353,7 +346,6 @@ export function App() {
     measureElement: () => 40,
     overscan: 0,
   })
-
   const virtualItems = rowVirtualizer.getVirtualItems()
   useEffect(() => {
     const lastItem = virtualItems[virtualItems.length - 1]
@@ -361,6 +353,17 @@ export function App() {
       void fetchNextPage()
     }
   }, [hasNextPage, fetchNextPage, issues.length, isFetchingNextPage, virtualItems])
+
+  useEffect(() => {
+    if (data?.pageParams.length === 1) {
+      parentRef.current?.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }, [data?.pageParams.length])
+
+  const isMobile = useIsMobile()
+
+  const [activeIssue, setActiveIssue] = useState<IssueWithConfidence | undefined>(undefined)
+  // console.log(activeIssue)
 
   return (
     <>
@@ -439,7 +442,7 @@ export function App() {
               height: `${rowVirtualizer.getTotalSize()}px`,
             }}
           >
-            {issues.length === 0 ? (
+            {!isFetching && issues.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={0} className="relative h-20 flex items-center">
                   <div className="text-muted-foreground sticky left-1/2 -translate-x-1/2">No issues found</div>
