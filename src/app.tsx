@@ -1,11 +1,11 @@
 import { jqlSearchPost, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
-import { type ColumnDef, type ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type HeaderContext, type SortingState, useReactTable } from "@tanstack/react-table"
+import { type ColumnDef, type ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type HeaderContext, type RowData, type SortingState, useReactTable } from "@tanstack/react-table"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -14,16 +14,24 @@ import { Switch } from "@/components/ui/switch"
 import { keepPreviousData, useInfiniteQuery, type QueryFunction } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
 import { createLanguageDetector } from "@/lib/store"
-import { ArrowDown, ArrowDown01, ArrowDown10, Loader2, Menu } from "lucide-react"
+import { ArrowDown, ArrowDown01, ArrowDown10, Loader2 } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Content } from "@/components/content"
 import { cn } from "./lib/utils"
+
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface TableMeta<TData extends RowData> {
+    hideNonEnglishIssues: boolean,
+    setHideNonEnglishIssues: (value: boolean) => void,
+  }
+}
 
 const maxResults = 25
 
 type IssueWithConfidence = (
   & JqlSearchResponse["issues"][number]
-  & { enConfidence: number | undefined }
+  & { englishConfidence: number | undefined }
 )
 
 type QueryKey = readonly [JqlSearchRequest["project"], SortingState, ColumnFiltersState, JqlSearchRequest["advanced"], JqlSearchRequest["search"], boolean]
@@ -62,7 +70,7 @@ const queryFn: QueryFunction<IssueWithConfidence[], QueryKey, number> = async ({
         const results = await languageDetector.detect(issue.fields.summary)
         for (const { detectedLanguage, confidence } of results) {
           if (detectedLanguage === "en") {
-            issue.enConfidence = confidence
+            issue.englishConfidence = confidence
             break
           }
         }
@@ -295,6 +303,16 @@ export function App() {
       header: "ADO",
       size: 100,
     },
+    {
+      id: "English Confidence",
+      accessorFn: (row) => row.englishConfidence,
+      size: 140,
+      header: EnglishConfidenceMenu,
+      cell: ({ getValue }) => {
+        const value = getValue<number | undefined>()
+        return value !== undefined ? <div className="text-right">{Math.round(value * 100)}%</div> : null
+      }
+    },
   ] satisfies ColumnDef<IssueWithConfidence>[], [])
 
   const table = useReactTable({
@@ -310,6 +328,10 @@ export function App() {
     state: {
       sorting,
       columnFilters,
+    },
+    meta: {
+      hideNonEnglishIssues,
+      setHideNonEnglishIssues,
     },
   })
 
@@ -357,21 +379,6 @@ export function App() {
             }}
             className="min-w-[300px]"
           />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Menu />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuCheckboxItem
-                checked={hideNonEnglishIssues}
-                onCheckedChange={setHideNonEnglishIssues}
-              >
-                Hide non-English issues
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
           <ThemeToggle />
         </div>
 
@@ -560,6 +567,28 @@ function StatusColumnMenu<T>({ header, column }: HeaderContext<T, unknown>) {
           <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="open">Open</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+function EnglishConfidenceMenu<T>({ table, header }: HeaderContext<T, unknown>) {
+  const { hideNonEnglishIssues, setHideNonEnglishIssues } = table.options.meta!
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost">
+          {header.id}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56">
+        <DropdownMenuLabel>{header.id}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <div className="flex items-center gap-2">
+          <Switch id="hide-non-english-issues" checked={hideNonEnglishIssues} onCheckedChange={setHideNonEnglishIssues} />
+          <Label htmlFor="hide-non-english-issues">Hide non-English issues</Label>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   )
