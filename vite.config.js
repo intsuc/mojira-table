@@ -17,7 +17,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  base: "/mojira/",
+  base: "/mojira-table/",
   build: {
     rollupOptions: {
       input: {

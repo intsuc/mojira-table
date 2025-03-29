@@ -6,8 +6,8 @@ import { ThemeProvider } from "@/components/theme-provider.tsx"
 import { Issue } from "@/components/issue"
 import { projects, jqlSearchPost, type JqlSearchRequest } from "./lib/api"
 
-const key = location.pathname.slice("/mojira/".length)
-document.title = `${key} - Mojira`
+const key = location.pathname.slice(import.meta.env.BASE_URL.length)
+document.title = `${key} - Mojira Table`
 
 const project = key?.split("-")[0]
 
@@ -37,7 +37,7 @@ function App() {
 
   useEffect(() => {
     if (issue !== undefined) {
-      document.title = `${issue.key} - ${issue.fields.summary} - Mojira`
+      document.title = `${issue.key} - ${issue.fields.summary} - Mojira Table`
     }
   }, [issue])
 
