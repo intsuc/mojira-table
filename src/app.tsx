@@ -81,7 +81,14 @@ export function App() {
   const [advanced, setAdvanced] = useState<JqlSearchRequest["advanced"]>(false)
   const [search, setSearch] = useState<JqlSearchRequest["search"]>("")
 
-  const { data, fetchNextPage, hasNextPage, isFetching, isRefetching, refetch } = useInfiniteQuery({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+    refetch,
+  } = useInfiniteQuery({
     queryKey: [project, sorting, columnFilters, advanced, search, hideNonEnglishIssues],
     queryFn,
     initialPageParam: 0,
@@ -352,8 +359,8 @@ export function App() {
             }}
             className="min-w-[300px]"
           />
-          <Button variant="outline" size="icon" disabled={isRefetching} onClick={() => void refetch()}>
-            <RefreshCw className={cn(isRefetching && "animate-spin")} />
+          <Button variant="outline" size="icon" disabled={isFetching} onClick={() => void refetch()}>
+            <RefreshCw className={cn(isFetching && "animate-spin")} />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -424,11 +431,11 @@ export function App() {
               <TableCell colSpan={columns.length}>
                 <Button
                   variant="ghost"
-                  disabled={isFetching || !hasNextPage}
+                  disabled={!hasNextPage || isFetchingNextPage}
                   onClick={() => void fetchNextPage()}
                   className="sticky left-2"
                 >
-                  {isFetching ? <><Loader2 className="animate-spin" />Loading...</> : hasNextPage ? "Load more" : "No more issues"}
+                  {isFetchingNextPage ? <><Loader2 className="animate-spin" />Loading...</> : hasNextPage ? "Load more" : "No more issues"}
                 </Button>
               </TableCell>
             </TableRow>
