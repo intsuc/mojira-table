@@ -363,6 +363,7 @@ export function App() {
             <Label htmlFor="advanced">Advanced</Label>
           </div>
           <Input
+            defaultValue={search}
             placeholder="Search"
             onBlur={(e) => setSearch(e.currentTarget.value)}
             onKeyDown={(e) => {
