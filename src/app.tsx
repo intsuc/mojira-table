@@ -480,7 +480,14 @@ export function App() {
               <DialogTitle>
                 {activeIssue !== undefined ? (
                   <div className="h-full flex flex-col">
-                    <div>{activeIssue.key}</div>
+                    <a
+                      href={`${import.meta.env.BASE_URL}${activeIssue.key}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-base text-blue-500 font-medium hover:underline"
+                    >
+                      {activeIssue.key}
+                    </a>
                     <div className="text-2xl font-bold">{activeIssue.fields.summary}</div>
                   </div>
                 ) : null}

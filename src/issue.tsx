@@ -1,4 +1,4 @@
-import { StrictMode } from "react"
+import { StrictMode, useEffect } from "react"
 import { createRoot } from "react-dom/client"
 import "./index.css"
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query"
@@ -7,6 +7,8 @@ import { Issue } from "@/components/issue"
 import { projects, jqlSearchPost, type JqlSearchRequest } from "./lib/api"
 
 const key = location.pathname.slice("/mojira/".length)
+document.title = `${key} - Mojira`
+
 const project = key?.split("-")[0]
 
 function App() {
@@ -33,12 +35,23 @@ function App() {
   })
   const issue = data?.issues[0]
 
+  useEffect(() => {
+    if (issue !== undefined) {
+      document.title = `${issue.key} - ${issue.fields.summary} - Mojira`
+    }
+  }, [issue])
+
   return (
     <div className="p-8">
       {issue !== undefined ? (
         <div className="flex flex-col gap-4">
           <div className="h-full flex flex-col">
-            <div>{issue.key}</div>
+            <a
+              href={`${import.meta.env.BASE_URL}${issue.key}`}
+              className="text-base text-blue-500 font-medium hover:underline"
+            >
+              {issue.key}
+            </a>
             <div className="text-2xl font-bold">{issue.fields.summary}</div>
           </div>
           <Issue issue={issue} />
