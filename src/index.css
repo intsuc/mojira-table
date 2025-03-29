@@ -8,6 +8,22 @@
   scrollbar-width: thin;
 }
 
+@theme {
+  --animate-indeterminate: indeterminate 3s infinite;
+
+  @keyframes indeterminate {
+    0% {
+      transform:  translateX(0) scaleX(0);
+    }
+    40% {
+      transform:  translateX(0) scaleX(0.4);
+    }
+    100% {
+      transform:  translateX(100%) scaleX(0.5);
+    }
+  }
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
