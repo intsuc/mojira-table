@@ -1,5 +1,6 @@
 import type { Content } from "@/lib/api"
 import { Badge } from "./ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 
 export function Content({
   content,
@@ -58,6 +59,20 @@ export function Content({
     case "orderedList": {
       // TODO: check `content.attrs.order`
       return <ol><Contents contents={content.content} /></ol>
+    }
+    case "panel": {
+      return (
+        <Card className="gap-0">
+          <CardHeader>
+            <CardTitle>
+              <Content content={content.content![0]!} />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Content content={content.content![1]!} />
+          </CardContent>
+        </Card>
+      )
     }
     case "paragraph": {
       return <p><Contents contents={content.content} /></p>
