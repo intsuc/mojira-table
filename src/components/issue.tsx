@@ -4,12 +4,28 @@ import { Content } from "./content"
 
 export function Issue({
   issue,
+  hideSummary,
 }: {
   issue: JqlSearchResponse["issues"][number],
+  hideSummary?: boolean,
 }) {
   return (
-    <div className="h-full flex flex-col">
-      <div className="grid grid-cols-[10rem_auto] *:py-2 *:border-b">
+    <div className="mx-auto max-w-3xl h-full grid grid-rows-[auto_1fr] gap-4">
+      {!hideSummary ? (
+        <div className="flex flex-col">
+          <a
+            href={`${import.meta.env.BASE_URL}${issue.key}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-base text-blue-500 font-medium hover:underline"
+          >
+            {issue.key}
+          </a>
+          <div className="text-2xl font-bold">{issue.fields.summary}</div>
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-[auto_1fr] text-sm *:odd:pr-1 *:odd:truncate *:py-1 *:border-b">
         <div>Issue Type</div> <div className="flex flex-row items-center gap-1">
           <img src={issue.fields.issuetype.iconUrl} alt={issue.fields.issuetype.name} width={0} height={0} className="size-5" />
           <div title={issue.fields.issuetype.description}>{issue.fields.issuetype.name}</div>
@@ -21,7 +37,6 @@ export function Issue({
         <div>Status</div> <div className="flex flex-row items-center gap-1">
           <img src={issue.fields.status.iconUrl} alt={issue.fields.status.name} width={0} height={0} className="size-4" />
           <div title={issue.fields.status.description}>{issue.fields.status.name}</div>
-          <div title={issue.fields.status.statusCategory.colorName}>({issue.fields.status.statusCategory.name})</div>
         </div>
         <div>Affects Version/s</div> <div className="flex flex-wrap gap-1">
           {issue.fields.versions.map((version) => (
@@ -73,12 +88,10 @@ export function Issue({
         <div>ADO</div> <div>{issue.fields.customfield_10050}</div>
       </div>
 
-      <div className="p-8 grid justify-center">
-        <div className="prose prose-zinc dark:prose-invert">
-          {issue.fields.description !== null ? (
-            <Content content={issue.fields.description} />
-          ) : null}
-        </div>
+      <div className="min-w-full prose prose-zinc dark:prose-invert">
+        {issue.fields.description !== null ? (
+          <Content content={issue.fields.description} />
+        ) : null}
       </div>
     </div>
   )

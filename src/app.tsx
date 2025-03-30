@@ -537,7 +537,14 @@ export function App() {
               <DrawerTitle>
                 {activeIssue !== undefined ? (
                   <div className="h-full flex flex-col">
-                    <div>{activeIssue.key}</div>
+                    <a
+                      href={`${import.meta.env.BASE_URL}${activeIssue.key}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-base text-blue-500 font-medium hover:underline"
+                    >
+                      {activeIssue.key}
+                    </a>
                     <div className="text-2xl">{activeIssue.fields.summary}</div>
                   </div>
                 ) : null}
@@ -545,7 +552,7 @@ export function App() {
               <DrawerDescription></DrawerDescription>
             </DrawerHeader>
             <div className="px-6 h-full overflow-y-auto">
-              {activeIssue ? <Issue issue={activeIssue} /> : null}
+              {activeIssue ? <Issue issue={activeIssue} hideSummary /> : null}
             </div>
           </DrawerContent>
         </Drawer>
@@ -554,7 +561,7 @@ export function App() {
           open={activeIssue !== undefined}
           onOpenChange={(open) => { if (!open) { setActiveIssue(undefined) } }}
         >
-          <DialogContent className="grid-rows-[auto_1fr]">
+          <DialogContent className="w-4xl grid-rows-[auto_1fr]">
             <DialogHeader>
               <DialogTitle>
                 {activeIssue !== undefined ? (
@@ -574,7 +581,7 @@ export function App() {
               <DialogDescription></DialogDescription>
             </DialogHeader>
             <div className="h-full overflow-y-auto">
-              {activeIssue ? <Issue issue={activeIssue} /> : null}
+              {activeIssue ? <Issue issue={activeIssue} hideSummary /> : null}
             </div>
           </DialogContent>
         </Dialog>

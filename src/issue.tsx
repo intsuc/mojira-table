@@ -39,18 +39,7 @@ function App() {
   return (
     <div className="p-8">
       {issue !== undefined ? (
-        <div className="flex flex-col gap-4">
-          <div className="h-full flex flex-col">
-            <a
-              href={`${import.meta.env.BASE_URL}${issue.key}`}
-              className="text-base text-blue-500 font-medium hover:underline"
-            >
-              {issue.key}
-            </a>
-            <div className="text-2xl font-bold">{issue.fields.summary}</div>
-          </div>
-          <Issue issue={issue} />
-        </div>
+        <Issue issue={issue} />
       ) : null}
     </div>
   )
