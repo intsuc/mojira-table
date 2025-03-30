@@ -1,3 +1,5 @@
+import type { ColumnFiltersState, SortingState } from "@tanstack/react-table"
+
 const reservedWords = [
   "a",
   "an",
@@ -198,7 +200,7 @@ const reservedWords = [
 
 const validWord = /^[^ +.,*/%^$#@[\]]*$/
 
-export function isValidWord(word: string): boolean {
+function isValidWord(word: string): boolean {
   if (reservedWords.includes(word.toLowerCase())) {
     return false
   }
@@ -206,4 +208,18 @@ export function isValidWord(word: string): boolean {
   // TODO: Add more validation rules
 
   return validWord.test(word)
+}
+
+export function buildQuery(
+  search: string,
+  sorting: SortingState,
+  columnFilters: ColumnFiltersState,
+): string {
+  const advanced = !isValidWord(search)
+
+  if (advanced) {
+    return search
+  } else {
+    return `text ~ ${search}`
+  }
 }

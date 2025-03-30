@@ -9,15 +9,10 @@ export const projects = [
 
 export type JqlSearchRequest = {
   project: typeof projects[number]["id"],
-  filter: "all" | "open" | "done",
-  sortField: "created" | "updated" | "priority" | "status",
-  sortAsc: boolean,
   advanced: boolean,
   search: string,
   startAt: number,
   maxResults: number,
-  isForge: boolean,
-  workspaceId: "",
 }
 
 export type Content =

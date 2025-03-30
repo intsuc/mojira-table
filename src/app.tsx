@@ -21,7 +21,7 @@ import { cn } from "./lib/utils"
 import { useLocalStorageState } from "@/hooks/use-local-storage-state"
 import { Issue } from "@/components/issue"
 import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual"
-import { isValidWord } from "@/lib/jql"
+import { buildQuery } from "@/lib/jql"
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -38,35 +38,24 @@ type IssueWithConfidence = (
   & { englishConfidence: number | undefined }
 )
 
-type QueryKey = readonly [JqlSearchRequest["project"], SortingState, ColumnFiltersState, JqlSearchRequest["search"], boolean]
+type QueryKey = readonly [
+  "issues",
+  project: JqlSearchRequest["project"],
+  query: string,
+  hideNonEnglishIssues: boolean,
+]
 
 const queryFn: QueryFunction<IssueWithConfidence[], QueryKey, number> = async ({
   pageParam,
   signal,
-  queryKey: [project, sorting, columnFilters, search, hideNonEnglishIssues],
+  queryKey: [, project, query, hideNonEnglishIssues],
 }): Promise<IssueWithConfidence[]> => {
-  const sortId = sorting[0]?.id
-  const sortField = sortId === "Created" ? "created"
-    : sortId === "Updated" ? "updated"
-      : sortId === "Status" ? "status"
-        : "created"
-  const sortAsc = sorting[0]?.desc === false
-
-  const filter = columnFilters.find((filter) => filter.id === "Status")?.value as "open" | undefined ?? "all"
-
-  const advanced = !isValidWord(search)
-
   const response = await jqlSearchPost({
     project,
-    filter,
-    sortField,
-    sortAsc,
-    advanced,
-    search,
+    advanced: true,
+    search: query,
     startAt: pageParam * maxResults,
     maxResults,
-    isForge: false,
-    workspaceId: "",
   }, signal)
   const issues = response.issues as IssueWithConfidence[]
   if (hideNonEnglishIssues) {
@@ -93,6 +82,11 @@ export function App() {
   const [search, setSearch] = useLocalStorageState<JqlSearchRequest["search"]>("search", "", (x) => x, (x) => x)
   const [hideNonEnglishIssues, setHideNonEnglishIssues] = useLocalStorageState("hideNonEnglishIssues", false, (x) => x.toString(), (x) => x === "true")
 
+  const query = useMemo(
+    () => buildQuery(search, sorting, columnFilters),
+    [columnFilters, search, sorting],
+  )
+
   const {
     data,
     fetchNextPage,
@@ -102,7 +96,7 @@ export function App() {
     isError,
     failureReason,
   } = useInfiniteQuery({
-    queryKey: [project, sorting, columnFilters, search, hideNonEnglishIssues],
+    queryKey: ["issues", project, query, hideNonEnglishIssues],
     queryFn,
     initialPageParam: 0,
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
