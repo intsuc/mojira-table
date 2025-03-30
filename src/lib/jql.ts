@@ -198,7 +198,7 @@ const reservedWords = [
   "with",
 ]
 
-const validWord = /^[^ +.,*/%^$#@[\]]*$/
+const validWord = /^[^ +.,*/%^$#@[\]]+$/
 
 function isValidWord(word: string): boolean {
   if (reservedWords.includes(word.toLowerCase())) {
