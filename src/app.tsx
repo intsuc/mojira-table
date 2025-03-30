@@ -21,6 +21,7 @@ import { cn } from "./lib/utils"
 import { useLocalStorageState } from "@/hooks/use-local-storage-state"
 import { Issue } from "@/components/issue"
 import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual"
+import { isValidWord } from "@/lib/jql"
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -37,12 +38,12 @@ type IssueWithConfidence = (
   & { englishConfidence: number | undefined }
 )
 
-type QueryKey = readonly [JqlSearchRequest["project"], SortingState, ColumnFiltersState, JqlSearchRequest["advanced"], JqlSearchRequest["search"], boolean]
+type QueryKey = readonly [JqlSearchRequest["project"], SortingState, ColumnFiltersState, JqlSearchRequest["search"], boolean]
 
 const queryFn: QueryFunction<IssueWithConfidence[], QueryKey, number> = async ({
   pageParam,
   signal,
-  queryKey: [project, sorting, columnFilters, advanced, search, hideNonEnglishIssues],
+  queryKey: [project, sorting, columnFilters, search, hideNonEnglishIssues],
 }): Promise<IssueWithConfidence[]> => {
   const sortId = sorting[0]?.id
   const sortField = sortId === "Created" ? "created"
@@ -52,6 +53,8 @@ const queryFn: QueryFunction<IssueWithConfidence[], QueryKey, number> = async ({
   const sortAsc = sorting[0]?.desc === false
 
   const filter = columnFilters.find((filter) => filter.id === "Status")?.value as "open" | undefined ?? "all"
+
+  const advanced = !isValidWord(search)
 
   const response = await jqlSearchPost({
     project,
@@ -87,7 +90,6 @@ export function App() {
   const [project, setProject] = useLocalStorageState<JqlSearchRequest["project"]>("project", "MC", (x) => x, (x) => x as JqlSearchRequest["project"])
   const [sorting, setSorting] = useLocalStorageState<SortingState>("sorting", [{ id: "Created", desc: true }])
   const [columnFilters, setColumnFilters] = useLocalStorageState<ColumnFiltersState>("columnFilters", [])
-  const [advanced, setAdvanced] = useLocalStorageState<JqlSearchRequest["advanced"]>("advanced", false, (x) => x.toString(), (x) => x === "true")
   const [search, setSearch] = useLocalStorageState<JqlSearchRequest["search"]>("search", "", (x) => x, (x) => x)
   const [hideNonEnglishIssues, setHideNonEnglishIssues] = useLocalStorageState("hideNonEnglishIssues", false, (x) => x.toString(), (x) => x === "true")
 
@@ -100,7 +102,7 @@ export function App() {
     isError,
     failureReason,
   } = useInfiniteQuery({
-    queryKey: [project, sorting, columnFilters, advanced, search, hideNonEnglishIssues],
+    queryKey: [project, sorting, columnFilters, search, hideNonEnglishIssues],
     queryFn,
     initialPageParam: 0,
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
@@ -386,10 +388,6 @@ export function App() {
               </SelectGroup>
             </SelectContent>
           </Select>
-          <div className="flex items-center gap-2">
-            <Switch id="advanced" checked={advanced} onCheckedChange={setAdvanced} />
-            <Label htmlFor="advanced">Advanced</Label>
-          </div>
           <Input
             defaultValue={search}
             placeholder="Search"
