@@ -1,4 +1,5 @@
 import type { ColumnFiltersState, SortingState } from "@tanstack/react-table"
+import type { JqlSearchRequest } from "./api"
 
 const reservedWords = [
   "a",
@@ -211,15 +212,26 @@ function isValidWord(word: string): boolean {
 }
 
 export function buildQuery(
+  project: JqlSearchRequest["project"],
   search: string,
   sorting: SortingState,
   columnFilters: ColumnFiltersState,
 ): string {
-  const advanced = !isValidWord(search)
-
-  if (advanced) {
-    return search
-  } else {
-    return `text ~ ${search}`
+  if (search.length > 0) {
+    const basic = isValidWord(search)
+    return basic ? `text ~ "${search}"` : search
   }
+
+  let query = `project = ${project}`
+
+  if (sorting.length > 0) {
+    query += " order by"
+    for (let i = 0; i < sorting.length; i++) {
+      const { id, desc } = sorting[i]!
+      if (i > 0) { query += "," }
+      query += ` ${id}${desc ? " desc" : ""}`
+    }
+  }
+
+  return query
 }

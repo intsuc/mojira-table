@@ -1,33 +1,36 @@
 import { jqlSearchPost, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
-import { type ColumnDef, type ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type HeaderContext, type Row, type RowData, type SortingState, useReactTable } from "@tanstack/react-table"
+import { type ColumnDef, type ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type Row, type RowData, type SortingState, useReactTable } from "@tanstack/react-table"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
 import { keepPreviousData, useInfiniteQuery, type QueryFunction } from "@tanstack/react-query"
 import { memo, useEffect, useMemo, useRef, useState } from "react"
 import { createLanguageDetector } from "@/lib/store"
-import { AlertCircle, ArrowDown, ArrowDown01, ArrowDown10, CircleSlash2 } from "lucide-react"
+import { AlertCircle, CircleSlash2 } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "./lib/utils"
 import { useLocalStorageState } from "@/hooks/use-local-storage-state"
 import { Issue } from "@/components/issue"
 import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual"
 import { buildQuery } from "@/lib/jql"
+import { DataTableColumnHeader } from "@/components/data-table-column-header"
+import { DataTableViewOptions } from "@/components/data-table-view-options"
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface TableMeta<TData extends RowData> {
     hideNonEnglishIssues: boolean,
     setHideNonEnglishIssues: (value: boolean) => void,
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    title: string,
   }
 }
 
@@ -77,14 +80,14 @@ const queryFn: QueryFunction<IssueWithConfidence[], QueryKey, number> = async ({
 
 export function App() {
   const [project, setProject] = useLocalStorageState<JqlSearchRequest["project"]>("project", "MC", (x) => x, (x) => x as JqlSearchRequest["project"])
-  const [sorting, setSorting] = useLocalStorageState<SortingState>("sorting", [{ id: "Created", desc: true }])
+  const [sorting, setSorting] = useLocalStorageState<SortingState>("sorting", [{ id: "created", desc: true }])
   const [columnFilters, setColumnFilters] = useLocalStorageState<ColumnFiltersState>("columnFilters", [])
   const [search, setSearch] = useLocalStorageState<JqlSearchRequest["search"]>("search", "", (x) => x, (x) => x)
   const [hideNonEnglishIssues, setHideNonEnglishIssues] = useLocalStorageState("hideNonEnglishIssues", false, (x) => x.toString(), (x) => x === "true")
 
   const query = useMemo(
-    () => buildQuery(search, sorting, columnFilters),
-    [columnFilters, search, sorting],
+    () => buildQuery(project, search, sorting, columnFilters),
+    [columnFilters, project, search, sorting],
   )
 
   const {
@@ -112,8 +115,10 @@ export function App() {
 
   const columns: ColumnDef<IssueWithConfidence>[] = useMemo(() => [
     {
+      id: "issuetype",
+      meta: { title: "Issue Type" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.issuetype,
-      header: "Issue Type",
       size: 85,
       cell: ({ getValue }) => {
         const issuetype = getValue<JqlSearchResponse["issues"][number]["fields"]["issuetype"]>()
@@ -126,32 +131,42 @@ export function App() {
       }
     },
     {
+      id: "key",
+      meta: { title: "Key" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.key,
-      header: "Key",
       size: 100,
     },
     {
+      id: "summary",
+      meta: { title: "Summary" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.summary,
-      header: "Summary",
       size: 400,
     },
     {
-      id: "Created",
+      id: "created",
+      meta: { title: "Created" },
       accessorFn: (row) => row.fields.created,
-      header: ColumnMenu,
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       size: 180,
       cell: ({ getValue }) => new Date(getValue<string>()).toLocaleString(),
     },
     {
-      id: "Updated",
+      id: "updated",
+      meta: { title: "Updated" },
       accessorFn: (row) => row.fields.updated,
-      header: ColumnMenu,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} />
+      ),
       size: 180,
       cell: ({ getValue }) => new Date(getValue<string>()).toLocaleString(),
     },
     {
+      id: "resolutiondate",
+      meta: { title: "Resolved" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.resolutiondate,
-      header: "Resolved",
       size: 180,
       cell: ({ getValue }) => {
         const value = getValue<string | null>()
@@ -159,8 +174,10 @@ export function App() {
       }
     },
     {
+      id: "resolution",
+      meta: { title: "Resolution" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.resolution,
-      header: "Resolution",
       size: 130,
       cell: ({ getValue }) => {
         const resolution = getValue<JqlSearchResponse["issues"][number]["fields"]["resolution"]>()
@@ -170,9 +187,10 @@ export function App() {
       }
     },
     {
-      id: "Status",
+      id: "status",
+      meta: { title: "Status" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.status,
-      header: StatusColumnMenu,
       size: 105,
       cell: ({ getValue }) => {
         const status = getValue<JqlSearchResponse["issues"][number]["fields"]["status"]>()
@@ -185,8 +203,10 @@ export function App() {
       }
     },
     {
+      id: "affectedVersion",
+      meta: { title: "Affects Versions" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.versions,
-      header: "Affects Version/s",
       size: 140,
       cell: ({ getValue }) => {
         const versions = getValue<JqlSearchResponse["issues"][number]["fields"]["versions"]>()
@@ -200,8 +220,10 @@ export function App() {
       }
     },
     {
+      id: "labels",
+      meta: { title: "Labels" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.labels,
-      header: "Labels",
       size: 140,
       cell: ({ getValue }) => {
         const labels = getValue<string[]>()
@@ -215,13 +237,17 @@ export function App() {
       }
     },
     {
+      id: "cf[10054]",
+      meta: { title: "Confirmation Status" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.customfield_10054?.value,
-      header: "Confirmation Status",
       size: 100,
     },
     {
+      id: "cf[10055]",
+      meta: { title: "Category" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.customfield_10055,
-      header: "Category",
       size: 100,
       cell: ({ getValue }) => {
         const categories = getValue<JqlSearchResponse["issues"][number]["fields"]["customfield_10055"]>()
@@ -241,28 +267,38 @@ export function App() {
       }
     },
     {
+      id: "cf[10048]",
+      meta: { title: "Game Mode" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.customfield_10048?.value,
-      header: "Game Mode",
       size: 100,
     },
     {
+      id: "cf[10051]",
+      meta: { title: "Area" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.customfield_10051?.value,
-      header: "Area",
       size: 100,
     },
     {
+      id: "cf[10049]",
+      meta: { title: "Mojang Priority" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.customfield_10049?.value,
-      header: "Mojang Priority",
       size: 115,
     },
     {
+      id: "cf[10061]",
+      meta: { title: "Operating System Version" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.customfield_10061,
-      header: "Operating System Version",
       size: 100,
     },
     {
+      id: "fixVersion",
+      meta: { title: "Fix Versions" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.fixVersions,
-      header: "Fix Version/s",
       size: 140,
       cell: ({ getValue }) => {
         const fixVersions = getValue<JqlSearchResponse["issues"][number]["fields"]["fixVersions"]>()
@@ -275,25 +311,32 @@ export function App() {
         )
       }
     },
-    // {
-    //   accessorFn: (row) => row.fields.issuelinks,
-    //   header: "Linked Issues",
-    // },
+    /*{
+      header: "Linked Issues",
+      accessorFn: (row) => row.fields.issuelinks,
+      cell: () => null, // TODO
+    },*/
     {
+      id: "cf[10070]",
+      meta: { title: "Votes" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.customfield_10070 ?? 0,
-      header: "Votes",
       size: 75,
       cell: ({ getValue }) => <div className="text-right">{getValue<number>()}</div>,
     },
     {
+      id: "watchers",
+      meta: { title: "Watchers" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.watches.watchCount,
-      header: "Watchers",
       size: 75,
       cell: ({ getValue }) => <div className="text-right">{getValue<number>()}</div>,
     },
     {
+      id: "cf[10047]",
+      meta: { title: "CHK" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.customfield_10047,
-      header: "CHK",
       size: 180,
       cell: ({ getValue }) => {
         const value = getValue<string | null>()
@@ -301,11 +344,13 @@ export function App() {
       },
     },
     {
+      id: "cf[10050]",
+      meta: { title: "ADO" },
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       accessorFn: (row) => row.fields.customfield_10050,
-      header: "ADO",
       size: 100,
     },
-    {
+    /* {
       id: "English Confidence",
       accessorFn: (row) => row.englishConfidence,
       size: 140,
@@ -314,7 +359,7 @@ export function App() {
         const value = getValue<number | undefined>()
         return value !== undefined ? <div className="text-right">{Math.round(value * 100)}%</div> : null
       }
-    },
+    }, */
   ] satisfies ColumnDef<IssueWithConfidence>[], [])
 
   const table = useReactTable({
@@ -400,6 +445,7 @@ export function App() {
             }}
             className="min-w-[300px]"
           />
+          <DataTableViewOptions table={table} />
           <ThemeToggle />
         </div>
 
@@ -579,98 +625,3 @@ const IssueRow = memo(function IssueRow({
     </TableRow>
   )
 })
-
-function ColumnMenu<T>({ header, column }: HeaderContext<T, unknown>) {
-  const direction = column.getIsSorted() || "none"
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost">
-          {header.id}
-          {direction === "none" ? <ArrowDown className="text-muted-foreground" /> : direction === "desc" ? <ArrowDown10 /> : <ArrowDown01 />}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56">
-        <DropdownMenuLabel>{header.id}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuRadioGroup value={direction} onValueChange={(value) => {
-          if (value === "none") {
-            column.clearSorting()
-          } else {
-            column.toggleSorting(value === "desc")
-          }
-        }}>
-          <DropdownMenuRadioItem value="none"><ArrowDown />None</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="desc"><ArrowDown10 />Descending</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="asc"><ArrowDown01 />Ascending</DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
-
-function StatusColumnMenu<T>({ header, column }: HeaderContext<T, unknown>) {
-  const direction = column.getIsSorted() || "none"
-  const filter = column.getIsFiltered() ? "open" : "all"
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost">
-          {header.id}
-          {direction === "none" ? <ArrowDown className="text-muted-foreground" /> : direction === "desc" ? <ArrowDown10 /> : <ArrowDown01 />}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56">
-        <DropdownMenuLabel>{header.id}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuRadioGroup value={direction} onValueChange={(value) => {
-          if (value === "none") {
-            column.clearSorting()
-          } else {
-            column.toggleSorting(value === "desc")
-          }
-        }}>
-          <DropdownMenuRadioItem value="none"><ArrowDown />None</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="desc"><ArrowDown10 />Descending</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="asc"><ArrowDown01 />Ascending</DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuRadioGroup value={filter} onValueChange={(value) => {
-          if (value === "all") {
-            column.setFilterValue(undefined)
-          } else {
-            column.clearSorting()
-            column.setFilterValue("open")
-          }
-        }}>
-          <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="open">Open</DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
-
-function EnglishConfidenceMenu<T>({ table, header }: HeaderContext<T, unknown>) {
-  const { hideNonEnglishIssues, setHideNonEnglishIssues } = table.options.meta!
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost">
-          {header.id}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56">
-        <DropdownMenuLabel>{header.id}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <div className="flex items-center gap-2">
-          <Switch id="hide-non-english-issues" checked={hideNonEnglishIssues} onCheckedChange={setHideNonEnglishIssues} />
-          <Label htmlFor="hide-non-english-issues">Hide non-English issues</Label>
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
