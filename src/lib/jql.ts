@@ -215,7 +215,7 @@ export function buildQuery(
   project: JqlSearchRequest["project"],
   search: string,
   sorting: SortingState,
-  columnFilters: ColumnFiltersState,
+  _columnFilters: ColumnFiltersState,
 ): string {
   if (search.length > 0) {
     const basic = isValidWord(search)

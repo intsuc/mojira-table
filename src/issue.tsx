@@ -21,15 +21,10 @@ function App() {
     }) => {
       return await jqlSearchPost({
         project: project as JqlSearchRequest["project"],
-        filter: "all",
-        sortField: "created",
-        sortAsc: false,
         advanced: true,
         search: `key = ${issueKey}`,
         startAt: 0,
         maxResults: 1,
-        isForge: false,
-        workspaceId: "",
       }, signal)
     }
   })
