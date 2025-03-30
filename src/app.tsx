@@ -1,5 +1,5 @@
 import { jqlSearchPost, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
-import { type ColumnDef, type ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type Row, type RowData, type SortingState, useReactTable } from "@tanstack/react-table"
+import { type Cell, type Column, type ColumnDef, type ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type Row, type RowData, type SortingState, useReactTable, VisibilityState } from "@tanstack/react-table"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -82,6 +82,7 @@ export function App() {
   const [project, setProject] = useLocalStorageState<JqlSearchRequest["project"]>("project", "MC", (x) => x, (x) => x as JqlSearchRequest["project"])
   const [sorting, setSorting] = useLocalStorageState<SortingState>("sorting", [{ id: "created", desc: true }])
   const [columnFilters, setColumnFilters] = useLocalStorageState<ColumnFiltersState>("columnFilters", [])
+  const [columnVisibility, setColumnVisibility] = useLocalStorageState<VisibilityState>("columnVisibility", {})
   const [search, setSearch] = useLocalStorageState<JqlSearchRequest["search"]>("search", "", (x) => x, (x) => x)
   const [hideNonEnglishIssues, setHideNonEnglishIssues] = useLocalStorageState("hideNonEnglishIssues", false, (x) => x.toString(), (x) => x === "true")
 
@@ -372,9 +373,11 @@ export function App() {
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     manualFiltering: true,
+    onColumnVisibilityChange: setColumnVisibility,
     state: {
       sorting,
       columnFilters,
+      columnVisibility,
     },
     meta: {
       hideNonEnglishIssues,
@@ -517,6 +520,7 @@ export function App() {
                 row={rows[virtualRow.index]}
                 virtualRow={virtualRow}
                 onClickIssue={setActiveIssue}
+                columnVisibility={columnVisibility}
               />
             ))}
           </TableBody>
@@ -583,10 +587,12 @@ const IssueRow = memo(function IssueRow({
   row,
   virtualRow,
   onClickIssue,
+  columnVisibility: _columnVisibility,
 }: {
   row: Row<IssueWithConfidence> | undefined,
   virtualRow: VirtualItem,
   onClickIssue: (issue: IssueWithConfidence) => void,
+  columnVisibility: VisibilityState,
 }) {
   return row !== undefined ? (
     <TableRow
@@ -600,16 +606,11 @@ const IssueRow = memo(function IssueRow({
       className="absolute top-0 left-0 w-full truncate bg-background hover:bg-accent "
     >
       {row.getVisibleCells().map((cell) => (
-        <TableCell
+        <IssueCell
           key={cell.id}
-          style={{
-            minWidth: cell.column.getSize(),
-            maxWidth: cell.column.getSize(),
-          }}
-          className="truncate"
-        >
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </TableCell>
+          cell={cell}
+          column={cell.column}
+        />
       ))}
     </TableRow>
   ) : (
@@ -623,5 +624,26 @@ const IssueRow = memo(function IssueRow({
     >
       <TableCell colSpan={0} className="p-0 h-full flex"></TableCell>
     </TableRow>
+  )
+})
+
+const IssueCell = memo(function IssueCell({
+  cell,
+  column,
+}: {
+  cell: Cell<IssueWithConfidence, unknown>,
+  column: Column<IssueWithConfidence, unknown>,
+}) {
+  return (
+    <TableCell
+      key={cell.id}
+      style={{
+        minWidth: column.getSize(),
+        maxWidth: column.getSize(),
+      }}
+      className="truncate"
+    >
+      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+    </TableCell>
   )
 })
