@@ -371,8 +371,8 @@ export function App() {
 
   return (
     <>
-      <div className="h-full flex flex-col overflow-hidden">
-        <div className="col-span-2 p-2 flex flex-row gap-2 border-b overflow-x-auto overflow-y-hidden">
+      <div className="h-full flex flex-col">
+        <div className="col-span-2 p-2 flex flex-row gap-2 overflow-x-auto overflow-y-hidden">
           <Select value={project} onValueChange={setProject as (value: JqlSearchRequest["project"]) => void}>
             <SelectTrigger className="min-w-[220px]">
               <SelectValue placeholder="Project" />
@@ -411,10 +411,16 @@ export function App() {
           <ThemeToggle />
         </div>
 
-        <Table ref={parentRef} className="flex-1 grid grid-rows-[auto_1fr] overflow-scroll overscroll-none">
+        <div className="relative h-0.5 overflow-clip">
+          <div className={cn(
+            "absolute left-0 top-0 inset-0 bg-blue-500 animate-indeterminate origin-left transition-opacity",
+            isFetching && !isFetchingNextPage ? "opacity-100" : "opacity-0",
+          )}></div>
+        </div>
+
+        <Table ref={parentRef} className="h-full grid grid-rows-[auto_1fr] overflow-scroll overscroll-none border-t">
           <TableHeader className={cn(
-            "grid sticky top-0 z-10 overflow-x-clip bg-background shadow-[0_1px_0_var(--border)] after:transition-opacity after:content-[''] after:absolute after:bottom-0 after:w-full after:h-0.5 after:bg-blue-500 after:animate-indeterminate after:origin-left",
-            isFetching ? "after:opacity-100" : "after:opacity-0",
+            "grid sticky top-0 z-10 w-full bg-background shadow-[0_1px_0_var(--border)]",
           )}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
