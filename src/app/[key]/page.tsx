@@ -1,10 +1,16 @@
-"use cache"
-
 import { Issue } from "@/components/issue"
 import { jqlSearchPostUrl, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
-import type { Metadata, ResolvingMetadata } from "next"
+import type { Metadata } from "next"
+
+export const revalidate = 60
+
+export async function generateStaticParams() {
+  return []
+}
 
 async function jqlSearchPostSingle(key: string): Promise<JqlSearchResponse> {
+  "use cache"
+
   const project = key.split("-")[0]
   const response = await fetch(jqlSearchPostUrl, {
     method: "POST",
@@ -33,8 +39,9 @@ type Props = {
 
 export async function generateMetadata(
   { params }: Props,
-  _parent: ResolvingMetadata,
 ): Promise<Metadata> {
+  "use cache"
+
   const { key } = await params
 
   return {
@@ -45,6 +52,8 @@ export async function generateMetadata(
 export default async function Page({
   params,
 }: Props) {
+  "use cache"
+
   // TODO: validation
 
   const { key } = await params
