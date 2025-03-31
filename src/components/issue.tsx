@@ -76,7 +76,7 @@ export function Issue({
                 <div>{issuelink.type.name}:</div>
                 <div>{issuelink.inwardIssue ? issuelink.type.inward : null}{issuelink.outwardIssue ? issuelink.type.outward : null}</div>
                 <div className="flex flex-row items-center gap-1">
-                  <Image src={issue.fields.issuetype.iconUrl} alt={issue.fields.issuetype.name} title={issue.fields.issuetype.description} width={0} height={0} className="size-4" />
+                  <Image src={issue.fields.issuetype.iconUrl} alt={issue.fields.issuetype.name} title={issue.fields.issuetype.description} width={0} height={0} className="size-4" unoptimized />
                   <div className="font-bold">{issue.key}</div>
                   <div>{issue.fields.summary}</div>
                 </div>
