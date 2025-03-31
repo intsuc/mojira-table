@@ -6,7 +6,10 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Loader2 } from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "Mojira Table",
+  title: {
+    default: "Mojira Table",
+    template: "%s | Mojira Table",
+  },
   description: "An unofficial Mojira viewer in table format",
 }
 

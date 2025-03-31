@@ -2,6 +2,7 @@
 
 import { Issue } from "@/components/issue"
 import { jqlSearchPostUrl, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
+import type { Metadata, ResolvingMetadata } from "next"
 
 async function jqlSearchPostSingle(key: string): Promise<JqlSearchResponse> {
   const project = key.split("-")[0]
@@ -26,11 +27,24 @@ async function jqlSearchPostSingle(key: string): Promise<JqlSearchResponse> {
   }
 }
 
+type Props = {
+  params: Promise<{ key: string }>,
+}
+
+export async function generateMetadata(
+  { params }: Props,
+  _parent: ResolvingMetadata,
+): Promise<Metadata> {
+  const { key } = await params
+
+  return {
+    title: key,
+  }
+}
+
 export default async function Page({
   params,
-}: {
-  params: Promise<{ key: string }>,
-}) {
+}: Props) {
   // TODO: validation
 
   const { key } = await params
