@@ -17,6 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://bugs.mojang.com" />
         <meta name="apple-mobile-web-app-title" content="Mojira Table" />
       </head>
       <body className="h-full antialiased">
