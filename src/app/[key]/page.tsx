@@ -1,3 +1,5 @@
+"use cache"
+
 import { Issue } from "@/components/issue"
 import { jqlSearchPost, type JqlSearchRequest } from "@/lib/api"
 
