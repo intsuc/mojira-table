@@ -42,8 +42,6 @@ type Props = {
 export async function generateMetadata(
   { params }: Props,
 ): Promise<Metadata> {
-  "use cache"
-
   const { key } = await params
 
   return {
