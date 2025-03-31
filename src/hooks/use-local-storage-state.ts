@@ -1,19 +1,30 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from "react"
 
 export function useLocalStorageState<T>(
   key: string,
   initialValue: T,
   serialize: (value: T) => string = JSON.stringify,
   deserialize: (value: string) => T = JSON.parse,
-) {
-  const [state, setState] = useState<T>(() => {
-    const storedValue = localStorage.getItem(key)
-    return storedValue === null ? initialValue : deserialize(storedValue)
-  })
+): [
+    T,
+    Dispatch<SetStateAction<T>>,
+  ] {
+  const [state, setState] = useState<T>(initialValue)
 
   useEffect(() => {
-    localStorage.setItem(key, serialize(state));
-  }, [key, serialize, state]);
+    const storedValue = localStorage.getItem(key)
+    if (storedValue !== null) {
+      setState(deserialize(storedValue))
+    }
+  }, [deserialize, key])
 
-  return [state, setState] as const
+  const storeState = useCallback((update: SetStateAction<T>) => {
+    setState((prev) => {
+      const newValue = typeof update === "function" ? (update as (value: T) => T)(prev) : update
+      localStorage.setItem(key, serialize(newValue))
+      return newValue
+    })
+  }, [key, serialize])
+
+  return [state, storeState] as const
 }

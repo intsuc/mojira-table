@@ -1,6 +1,8 @@
 import type { JqlSearchResponse } from "@/lib/api"
 import { Badge } from "./ui/badge"
 import { Content } from "./content"
+import Image from "next/image"
+import Link from "next/link"
 
 export function Issue({
   issue,
@@ -13,21 +15,21 @@ export function Issue({
     <div className="mx-auto max-w-3xl h-full grid grid-rows-[auto_1fr] gap-4">
       {!hideSummary ? (
         <div className="flex flex-col">
-          <a
-            href={`${import.meta.env.BASE_URL}${issue.key}`}
+          <Link
+            href={`/${issue.key}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-base text-blue-500 font-medium hover:underline"
           >
             {issue.key}
-          </a>
+          </Link>
           <div className="text-2xl font-bold">{issue.fields.summary}</div>
         </div>
       ) : null}
 
       <div className="grid grid-cols-[auto_1fr] text-sm *:odd:pr-1 *:odd:truncate *:py-1 *:border-b">
         <div>Issue Type</div> <div className="flex flex-row items-center gap-1">
-          <img src={issue.fields.issuetype.iconUrl} alt={issue.fields.issuetype.name} width={0} height={0} className="size-5" />
+          <Image src={issue.fields.issuetype.iconUrl} alt={issue.fields.issuetype.name} width={0} height={0} className="size-5" unoptimized />
           <div title={issue.fields.issuetype.description}>{issue.fields.issuetype.name}</div>
         </div>
         <div>Created</div> <div>{new Date(issue.fields.created).toLocaleString()}</div>
@@ -35,7 +37,7 @@ export function Issue({
         <div>Resolved</div> <div>{issue.fields.resolutiondate ? new Date(issue.fields.resolutiondate).toLocaleString() : null}</div>
         <div>Resolution</div> <div><div title={issue.fields.resolution?.description}>{issue.fields.resolution?.name}</div></div>
         <div>Status</div> <div className="flex flex-row items-center gap-1">
-          <img src={issue.fields.status.iconUrl} alt={issue.fields.status.name} width={0} height={0} className="size-4" />
+          <Image src={issue.fields.status.iconUrl} alt={issue.fields.status.name} width={0} height={0} className="size-4" />
           <div title={issue.fields.status.description}>{issue.fields.status.name}</div>
         </div>
         <div>Affects Version/s</div> <div className="flex flex-wrap gap-1">
@@ -74,7 +76,7 @@ export function Issue({
                 <div>{issuelink.type.name}:</div>
                 <div>{issuelink.inwardIssue ? issuelink.type.inward : null}{issuelink.outwardIssue ? issuelink.type.outward : null}</div>
                 <div className="flex flex-row items-center gap-1">
-                  <img src={issue.fields.issuetype.iconUrl} alt={issue.fields.issuetype.name} title={issue.fields.issuetype.description} width={0} height={0} className="size-4" />
+                  <Image src={issue.fields.issuetype.iconUrl} alt={issue.fields.issuetype.name} title={issue.fields.issuetype.description} width={0} height={0} className="size-4" />
                   <div className="font-bold">{issue.key}</div>
                   <div>{issue.fields.summary}</div>
                 </div>

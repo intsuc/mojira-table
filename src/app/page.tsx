@@ -1,3 +1,5 @@
+"use client"
+
 import { jqlSearchPost, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
 import { type Cell, type Column, type ColumnDef, type ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type Row, type RowData, type SortingState, useReactTable, VisibilityState } from "@tanstack/react-table"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -13,13 +15,15 @@ import { memo, useEffect, useMemo, useRef, useState } from "react"
 import { createLanguageDetector } from "@/lib/store"
 import { AlertCircle, CircleSlash2 } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { cn } from "./lib/utils"
+import { cn } from "@/lib/utils"
 import { useLocalStorageState } from "@/hooks/use-local-storage-state"
 import { Issue } from "@/components/issue"
 import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual"
 import { buildQuery } from "@/lib/jql"
 import { DataTableColumnHeader } from "@/components/data-table-column-header"
 import { DataTableViewOptions } from "@/components/data-table-view-options"
+import Image from "next/image"
+import Link from "next/link"
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -78,7 +82,7 @@ const queryFn: QueryFunction<IssueWithConfidence[], QueryKey, number> = async ({
   return issues
 }
 
-export function App() {
+export default function Page() {
   const [project, setProject] = useLocalStorageState<JqlSearchRequest["project"]>("project", "MC", (x) => x, (x) => x as JqlSearchRequest["project"])
   const [sorting, setSorting] = useLocalStorageState<SortingState>("sorting", [{ id: "created", desc: true }])
   const [columnFilters, setColumnFilters] = useLocalStorageState<ColumnFiltersState>("columnFilters", [])
@@ -125,7 +129,7 @@ export function App() {
         const issuetype = getValue<JqlSearchResponse["issues"][number]["fields"]["issuetype"]>()
         return (
           <div className="flex flex-row items-center gap-1">
-            <img src={issuetype.iconUrl} alt={issuetype.name} width={0} height={0} className="size-5" />
+            <Image src={issuetype.iconUrl} alt={issuetype.name} width={0} height={0} className="size-5" unoptimized />
             <div title={issuetype.description}>{issuetype.name}</div>
           </div>
         )
@@ -197,7 +201,7 @@ export function App() {
         const status = getValue<JqlSearchResponse["issues"][number]["fields"]["status"]>()
         return (
           <div className="flex flex-row items-center gap-1">
-            <img src={status.iconUrl} alt={status.name} width={0} height={0} className="size-4" />
+            <Image src={status.iconUrl} alt={status.name} width={0} height={0} className="size-4" />
             <div title={status.description}>{status.name}</div>
           </div>
         )
@@ -537,14 +541,14 @@ export function App() {
               <DrawerTitle>
                 {activeIssue !== undefined ? (
                   <div className="h-full flex flex-col">
-                    <a
-                      href={`${import.meta.env.BASE_URL}${activeIssue.key}`}
+                    <Link
+                      href={`/${activeIssue.key}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-base text-blue-500 font-medium hover:underline"
                     >
                       {activeIssue.key}
-                    </a>
+                    </Link>
                     <div className="text-2xl">{activeIssue.fields.summary}</div>
                   </div>
                 ) : null}
@@ -566,14 +570,14 @@ export function App() {
               <DialogTitle>
                 {activeIssue !== undefined ? (
                   <div className="h-full flex flex-col">
-                    <a
-                      href={`${import.meta.env.BASE_URL}${activeIssue.key}`}
+                    <Link
+                      href={`/${activeIssue.key}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-base text-blue-500 font-medium hover:underline"
                     >
                       {activeIssue.key}
-                    </a>
+                    </Link>
                     <div className="text-2xl font-bold">{activeIssue.fields.summary}</div>
                   </div>
                 ) : null}

@@ -1,6 +1,7 @@
 import type { Content } from "@/lib/api"
 import { Badge } from "./ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import Link from "next/link"
 
 export function Content({
   content,
@@ -48,7 +49,7 @@ export function Content({
       break
     }
     case "inlineCard": {
-      return <a href={content.attrs.url}>{content.attrs.url}</a>
+      return <Link href={content.attrs.url}>{content.attrs.url}</Link>
     }
     case "listItem": {
       return <li><Contents contents={content.content} /></li>
