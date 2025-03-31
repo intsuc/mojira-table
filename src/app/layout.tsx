@@ -1,8 +1,9 @@
 import type { Metadata } from "next"
 import "./globals.css"
-import type { ReactNode } from "react"
+import { Suspense, type ReactNode } from "react"
 import { QueryProvider } from "@/components/query-provider"
 import { ThemeProvider } from "@/components/theme-provider"
+import { Loader2 } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "Mojira Table",
@@ -28,7 +29,13 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <Suspense fallback={
+              <div className="h-full grid place-items-center">
+                <Loader2 className="animate-spin text-primary" width={32} height={32} />
+              </div>
+            }>
+              {children}
+            </Suspense>
           </ThemeProvider>
         </QueryProvider>
       </body>

@@ -211,7 +211,7 @@ export type JqlSearchResponse = {
   names: Record<string, string>,
 }
 
-const jqlSearchPostUrl = "https://bugs.mojang.com/api/jql-search-post"
+export const jqlSearchPostUrl = "https://bugs.mojang.com/api/jql-search-post"
 
 export async function jqlSearchPost(request: JqlSearchRequest, signal?: AbortSignal): Promise<JqlSearchResponse> {
   const response = await fetch(jqlSearchPostUrl, {
