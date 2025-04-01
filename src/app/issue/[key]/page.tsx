@@ -35,7 +35,7 @@ export async function generateMetadata(
   }
 }
 
-async function jqlSearchPostSingle(key: string): Promise<JqlSearchResponse> {
+async function jqlSearchPostSingle(key: Key): Promise<JqlSearchResponse> {
   "use cache"
 
   const project = key.split("-")[0]
