@@ -65,15 +65,32 @@ export default async function Page({
 }: Props) {
   "use cache"
 
-  const { key } = v.parse(ParamsSchema, await params)
-  const { issues } = await jqlSearchPostSingle(key)
-  const issue = issues[0]
+  const result = v.safeParse(ParamsSchema, await params)
+  if (result.success) {
+    const { key } = result.output
+    try {
+      const { issues } = await jqlSearchPostSingle(key)
+      const issue = issues[0]
 
-  return (
-    <div className="p-8">
-      {issue !== undefined ? (
-        <Issue issue={issue} />
-      ) : null}
-    </div>
-  )
+      return (
+        <div className="p-8">
+          {issue !== undefined ? (
+            <Issue issue={issue} />
+          ) : null}
+        </div>
+      )
+    } catch (_) {
+      return (
+        <div className="p-8 h-full grid place-items-center">
+          <div className="text-2xl font-bold">Issue not found</div>
+        </div>
+      )
+    }
+  } else {
+    return (
+      <div className="p-8 h-full grid place-items-center">
+        <div className="text-2xl font-bold">Invalid issue key</div>
+      </div>
+    )
+  }
 }
