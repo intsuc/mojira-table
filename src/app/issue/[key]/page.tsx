@@ -5,11 +5,7 @@ import * as v from "valibot"
 
 export const revalidate = 60
 
-export const dynamicParams = true
-
-export async function generateStaticParams() {
-  return []
-}
+export const dynamic = "force-static"
 
 type Key = `${typeof projects[number]["id"]}-${number}`
 
