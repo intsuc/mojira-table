@@ -13,7 +13,7 @@ export function Content({
       return <ul><Contents contents={content.content} /></ul>
     }
     case "codeBlock": {
-      return <code><Contents contents={content.content} /></code>
+      return <pre><code><Contents contents={content.content} /></code></pre>
     }
     case "doc": {
       // TODO: check `content.version`
