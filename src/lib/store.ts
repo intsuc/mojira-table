@@ -1,9 +1,15 @@
 import { Store } from "@tanstack/store"
+import { createHighlighter, type BundledLanguage, type BundledTheme, type HighlighterGeneric } from "shiki"
 
 export const store = new Store<{
   languageDetector: AILanguageDetector | undefined,
+  highlighter: Promise<HighlighterGeneric<BundledLanguage, BundledTheme>>,
 }>({
   languageDetector: undefined,
+  highlighter: createHighlighter({
+    themes: ["github-dark", "github-light"],
+    langs: ["java", "json", "text"],
+  }),
 })
 
 export async function createLanguageDetector() {

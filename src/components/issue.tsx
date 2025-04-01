@@ -3,13 +3,17 @@ import { Badge } from "./ui/badge"
 import { Content } from "./content"
 import Image from "next/image"
 import Link from "next/link"
+import type { ReactNode } from "react"
+import type { BundledLanguage } from "shiki"
 
 export function Issue({
   issue,
   hideSummary,
+  CodeBlockComponent,
 }: {
   issue: JqlSearchResponse["issues"][number],
   hideSummary?: boolean,
+  CodeBlockComponent: (props: { text: string, lang: BundledLanguage }) => ReactNode,
 }) {
   return (
     <div className="mx-auto max-w-3xl h-full grid grid-rows-[auto_1fr] gap-4">
@@ -92,7 +96,10 @@ export function Issue({
 
       <div className="min-w-full prose prose-zinc dark:prose-invert">
         {issue.fields.description !== null ? (
-          <Content content={issue.fields.description} />
+          <Content
+            content={issue.fields.description}
+            CodeBlockComponent={CodeBlockComponent}
+          />
         ) : null}
       </div>
     </div>

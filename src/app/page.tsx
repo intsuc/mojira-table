@@ -11,8 +11,9 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { keepPreviousData, useInfiniteQuery, type QueryFunction } from "@tanstack/react-query"
-import { memo, useEffect, useMemo, useRef, useState } from "react"
-import { createLanguageDetector } from "@/lib/store"
+import { useStore } from "@tanstack/react-store"
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { createLanguageDetector, store } from "@/lib/store"
 import { AlertCircle, CircleSlash2 } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -24,6 +25,7 @@ import { DataTableColumnHeader } from "@/components/data-table-column-header"
 import { DataTableViewOptions } from "@/components/data-table-view-options"
 import Image from "next/image"
 import Link from "next/link"
+import type { BundledLanguage } from "shiki"
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -556,7 +558,7 @@ export default function Page() {
               <DrawerDescription></DrawerDescription>
             </DrawerHeader>
             <div className="px-6 h-full overflow-y-auto">
-              {activeIssue ? <Issue issue={activeIssue} hideSummary /> : null}
+              {activeIssue ? <Issue issue={activeIssue} hideSummary CodeBlockComponent={CodeBlock} /> : null}
             </div>
           </DrawerContent>
         </Drawer>
@@ -585,7 +587,7 @@ export default function Page() {
               <DialogDescription></DialogDescription>
             </DialogHeader>
             <div className="h-full overflow-y-auto">
-              {activeIssue ? <Issue issue={activeIssue} hideSummary /> : null}
+              {activeIssue ? <Issue issue={activeIssue} hideSummary CodeBlockComponent={CodeBlock} /> : null}
             </div>
           </DialogContent>
         </Dialog>
@@ -658,3 +660,32 @@ const IssueCell = memo(function IssueCell({
     </TableCell>
   )
 })
+
+function CodeBlock({
+  text,
+  lang,
+}: {
+  text: string,
+  lang: BundledLanguage,
+}) {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const highlighter = useStore(store, (state) => state.highlighter)
+
+  useLayoutEffect(() => {
+    void (async () => {
+      const out = (await highlighter).codeToHtml(text, {
+        lang,
+        themes: {
+          dark: "github-dark",
+          light: "github-light",
+        },
+      })
+      if (containerRef.current !== null) {
+        containerRef.current.innerHTML = out
+      }
+    })()
+  }, [highlighter, lang, text])
+
+  return <div ref={containerRef}></div>
+}

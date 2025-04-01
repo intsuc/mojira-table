@@ -2,6 +2,7 @@ import { Issue } from "@/components/issue"
 import { jqlSearchPostUrl, type JqlSearchRequest, type JqlSearchResponse, type projects } from "@/lib/api"
 import type { Metadata } from "next"
 import * as v from "valibot"
+import { codeToHtml, type BundledLanguage } from "shiki"
 
 export const revalidate = 60
 
@@ -71,7 +72,7 @@ export default async function Page({
       return (
         <div className="p-8">
           {issue !== undefined ? (
-            <Issue issue={issue} />
+            <Issue issue={issue} CodeBlockComponent={CodeBlock} />
           ) : null}
         </div>
       )
@@ -89,4 +90,22 @@ export default async function Page({
       </div>
     )
   }
+}
+
+async function CodeBlock({
+  text,
+  lang,
+}: {
+  text: string
+  lang: BundledLanguage,
+}) {
+  const out = await codeToHtml(text, {
+    lang,
+    themes: {
+      light: "github-light",
+      dark: "github-dark",
+    },
+  })
+
+  return <div dangerouslySetInnerHTML={{ __html: out }} />
 }
