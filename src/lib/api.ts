@@ -17,7 +17,7 @@ export type JqlSearchRequest = {
 
 export type Content =
   | { type: "bulletList", content?: Content[] }
-  | { type: "codeBlock", content?: Content[] }
+  | { type: "codeBlock", attrs?: { language: string }, content?: Content[] }
   | { type: "doc", version: number, content?: Content[] }
   | { type: "emoji", attrs: { shortName: string, id: string, text: string } }
   | { type: "hardBreak" }

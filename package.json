@@ -49,6 +49,7 @@
     "eslint": "^9.23.0",
     "eslint-config-next": "15.3.0-canary.26",
     "eslint-plugin-react-hooks": "^5.2.0",
+    "shiki": "^3.2.1",
     "tailwindcss": "^4.0.17",
     "typescript": "^5.8.2"
   }
