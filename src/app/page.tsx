@@ -574,7 +574,7 @@ export default function Page() {
                       href={`/issue/${activeIssue.key}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-base text-blue-500 font-medium hover:underline"
+                      className="text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
                     >
                       {activeIssue.key}
                     </Link>

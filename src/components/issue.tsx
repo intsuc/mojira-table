@@ -19,7 +19,7 @@ export function Issue({
             href={`/issue/${issue.key}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-base text-blue-500 font-medium hover:underline"
+            className="text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
           >
             {issue.key}
           </Link>
