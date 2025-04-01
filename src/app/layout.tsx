@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     default: "Mojira Table",
     template: "%s | Mojira Table",
   },
-  description: "An unofficial Mojira viewer in table format",
+  description: "An unofficial table viewer for Mojira",
 }
 
 export default function RootLayout({
