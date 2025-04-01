@@ -4,7 +4,7 @@ import type { Metadata } from "next"
 import * as v from "valibot"
 import { codeToHtml, type BundledLanguage } from "shiki"
 
-export const revalidate = 60
+export const revalidate = 900
 
 export const dynamic = "force-static"
 
