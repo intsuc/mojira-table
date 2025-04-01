@@ -16,7 +16,7 @@ export function Issue({
       {!hideSummary ? (
         <div className="flex flex-col">
           <Link
-            href={`/${issue.key}`}
+            href={`/issue/${issue.key}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-base text-blue-500 font-medium hover:underline"

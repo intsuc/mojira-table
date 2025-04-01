@@ -542,7 +542,7 @@ export default function Page() {
                 {activeIssue !== undefined ? (
                   <div className="h-full flex flex-col">
                     <Link
-                      href={`/${activeIssue.key}`}
+                      href={`/issue/${activeIssue.key}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-base text-blue-500 font-medium hover:underline"
@@ -571,7 +571,7 @@ export default function Page() {
                 {activeIssue !== undefined ? (
                   <div className="h-full flex flex-col">
                     <Link
-                      href={`/${activeIssue.key}`}
+                      href={`/issue/${activeIssue.key}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-base text-blue-500 font-medium hover:underline"
