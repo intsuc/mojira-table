@@ -1,6 +1,7 @@
 import { Issue } from "@/components/issue"
-import { jqlSearchPostUrl, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
+import { jqlSearchPostUrl, type JqlSearchRequest, type JqlSearchResponse, type projects } from "@/lib/api"
 import type { Metadata } from "next"
+import * as v from "valibot"
 
 export const revalidate = 60
 
@@ -8,6 +9,30 @@ export const dynamicParams = true
 
 export async function generateStaticParams() {
   return []
+}
+
+type Key = `${typeof projects[number]["id"]}-${number}`
+
+function isValidKey(key: unknown): key is Key {
+  return typeof key === "string" && /^(?:MC|MCPE|REALMS|MCL|BDS|WEB)-\d+$/.test(key)
+}
+
+const ParamsSchema = v.object({
+  key: v.custom<Key>(isValidKey),
+})
+
+type Props = {
+  params: Promise<v.InferInput<typeof ParamsSchema>>,
+}
+
+export async function generateMetadata(
+  { params }: Props,
+): Promise<Metadata> {
+  const { key } = await params
+
+  return {
+    title: key,
+  }
 }
 
 async function jqlSearchPostSingle(key: string): Promise<JqlSearchResponse> {
@@ -35,28 +60,12 @@ async function jqlSearchPostSingle(key: string): Promise<JqlSearchResponse> {
   }
 }
 
-type Props = {
-  params: Promise<{ key: string }>,
-}
-
-export async function generateMetadata(
-  { params }: Props,
-): Promise<Metadata> {
-  const { key } = await params
-
-  return {
-    title: key,
-  }
-}
-
 export default async function Page({
   params,
 }: Props) {
   "use cache"
 
-  // TODO: validation
-
-  const { key } = await params
+  const { key } = v.parse(ParamsSchema, await params)
   const { issues } = await jqlSearchPostSingle(key)
   const issue = issues[0]
 
