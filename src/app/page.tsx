@@ -618,7 +618,6 @@ const IssueRow = memo(function IssueRow({
         <IssueCell
           key={cell.id}
           cell={cell}
-          column={cell.column}
         />
       ))}
     </TableRow>
@@ -638,17 +637,15 @@ const IssueRow = memo(function IssueRow({
 
 const IssueCell = memo(function IssueCell({
   cell,
-  column,
 }: {
   cell: Cell<IssueWithConfidence, unknown>,
-  column: Column<IssueWithConfidence, unknown>,
 }) {
   return (
     <TableCell
       key={cell.id}
       style={{
-        minWidth: column.getSize(),
-        maxWidth: column.getSize(),
+        minWidth: cell.column.getSize(),
+        maxWidth: cell.column.getSize(),
       }}
       className="truncate"
     >
