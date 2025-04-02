@@ -25,9 +25,9 @@ export function DataTableColumnHeader<TData, TValue>({
         >
           <span className="truncate">{title}</span>
           {column.getIsSorted() === "desc" ? (
-            <ArrowDown10 />
+            <ArrowDown10 className="size-4" />
           ) : column.getIsSorted() === "asc" ? (
-            <ArrowDown01 />
+            <ArrowDown01 className="size-4" />
           ) : (
             null
           )}
