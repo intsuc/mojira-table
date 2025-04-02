@@ -15,10 +15,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-  modal,
 }: Readonly<{
   children: ReactNode,
-  modal: ReactNode,
 }>) {
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
@@ -40,7 +38,6 @@ export default function RootLayout({
               </div>
             }>
               {children}
-              {modal}
             </Suspense>
           </ThemeProvider>
         </QueryProvider>

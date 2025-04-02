@@ -5,11 +5,13 @@ import { type Cell, type ColumnDef, type ColumnFiltersState, flexRender, getCore
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { keepPreviousData, useInfiniteQuery, type QueryFunction } from "@tanstack/react-query"
-import { memo, useEffect, useMemo, useRef } from "react"
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { store } from "@/lib/store"
 import { AlertCircle, CircleSlash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -19,8 +21,12 @@ import { buildQuery } from "@/lib/jql"
 import { DataTableColumnHeader } from "@/components/data-table-column-header"
 import { DataTableViewOptions } from "@/components/data-table-view-options"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
 import { useIsMounted } from "@/hooks/use-mounted"
+import { useStore } from "@tanstack/react-store"
+import type { BundledLanguage } from "shiki"
+import Link from "next/link"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { Issue } from "@/components/issue"
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-object-type
@@ -375,122 +381,137 @@ export default function Page() {
     }
   }, [data?.pageParams.length])
 
-  const router = useRouter()
+  const [activeIssue, setActiveIssue] = useState<JqlSearchResponse["issues"][number] | undefined>(undefined)
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="col-span-2 p-2 flex flex-row gap-2 overflow-x-auto overflow-y-hidden">
-        <Select value={project} onValueChange={setProject as (value: JqlSearchRequest["project"]) => void}>
-          <SelectTrigger className="min-w-[220px]">
-            <SelectValue placeholder="Project" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Project</SelectLabel>
-              {projects.map((project) => (
-                <SelectItem key={project.id} value={project.id}>{project.label}</SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-        <Input
-          defaultValue={search}
-          placeholder="Search"
-          onBlur={(e) => setSearch(e.currentTarget.value)}
-          onKeyDown={(e) => {
-            switch (e.key) {
-              case "Enter": {
-                setSearch(e.currentTarget.value)
-                break
+    <>
+      <div className="h-full flex flex-col">
+        <div className="col-span-2 p-2 flex flex-row gap-2 overflow-x-auto overflow-y-hidden">
+          <Select value={project} onValueChange={setProject as (value: JqlSearchRequest["project"]) => void}>
+            <SelectTrigger className="min-w-[220px]">
+              <SelectValue placeholder="Project" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Project</SelectLabel>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>{project.label}</SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          <Input
+            defaultValue={search}
+            placeholder="Search"
+            onBlur={(e) => setSearch(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              switch (e.key) {
+                case "Enter": {
+                  setSearch(e.currentTarget.value)
+                  break
+                }
+                case "Escape": {
+                  e.currentTarget.value = search
+                  break
+                }
               }
-              case "Escape": {
-                e.currentTarget.value = search
-                break
-              }
-            }
-          }}
-          className="min-w-[300px]"
-        />
-        <DataTableViewOptions table={table} />
-        <ThemeToggle />
-      </div>
+            }}
+            className="min-w-[300px]"
+          />
+          <DataTableViewOptions table={table} />
+          <ThemeToggle />
+        </div>
 
-      <div className="relative h-0.5 overflow-clip">
-        <div className={cn(
-          "absolute left-0 top-0 inset-0 bg-blue-500 animate-indeterminate origin-left transition-opacity",
-          isFetching && !isFetchingNextPage ? "opacity-100" : "opacity-0",
-        )}></div>
-      </div>
+        <div className="relative h-0.5 overflow-clip">
+          <div className={cn(
+            "absolute left-0 top-0 inset-0 bg-blue-500 animate-indeterminate origin-left transition-opacity",
+            isFetching && !isFetchingNextPage ? "opacity-100" : "opacity-0",
+          )}></div>
+        </div>
 
-      <Table ref={parentRef} className="h-full grid grid-rows-[auto_1fr] overflow-scroll overscroll-none border-t">
-        <TableHeader className={cn(
-          "grid sticky top-0 z-10 w-full bg-background shadow-[0_1px_0_var(--border)]",
-        )}>
-          <TableRow>
-            {table.getFlatHeaders().map((header) => (
-              <TableHead
-                key={header.id}
-                style={{
-                  minWidth: header.getSize(),
-                  maxWidth: header.getSize(),
-                }}
-                className="px-0"
-              >
-                {header.isPlaceholder
-                  ? null
-                  : flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody
-          className="grid relative before:content-[''] before:absolute before:inset-0 before:bg-primary/5 before:animate-pulse"
-          style={{
-            height: `${rowVirtualizer.getTotalSize()}px`,
-          }}
-        >
-          {isMounted && !isFetching && issues.length === 0 ? (
+        <Table ref={parentRef} className="h-full grid grid-rows-[auto_1fr] overflow-scroll overscroll-none border-t">
+          <TableHeader className={cn(
+            "grid sticky top-0 z-10 w-full bg-background shadow-[0_1px_0_var(--border)]",
+          )}>
             <TableRow>
-              <TableCell colSpan={0} className="relative flex items-center">
-                <div className="sticky left-1/2 -translate-x-1/2">
-                  {isError ? (
-                    <Alert variant="destructive">
-                      <AlertCircle className="size-4" />
-                      <AlertTitle>Error</AlertTitle>
-                      <AlertDescription>
-                        {failureReason?.message}
-                      </AlertDescription>
-                    </Alert>
-                  ) : (
-                    <Alert>
-                      <CircleSlash2 className="size-4" />
-                      <AlertTitle>No issues found</AlertTitle>
-                    </Alert>
-                  )}
-                </div>
-              </TableCell>
+              {table.getFlatHeaders().map((header) => (
+                <TableHead
+                  key={header.id}
+                  style={{
+                    minWidth: header.getSize(),
+                    maxWidth: header.getSize(),
+                  }}
+                  className="px-0"
+                >
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                </TableHead>
+              ))}
             </TableRow>
-          ) : virtualItems.map((virtualRow) => (
-            <IssueRow
-              key={virtualRow.index}
-              row={rows[virtualRow.index]}
-              virtualRow={virtualRow}
-              onClickIssue={(issue) => {
-                store.setState((state) => ({
-                  ...state,
-                  activeIssue: issue,
-                }))
-                router.push(`/issue/${issue.key}`)
-              }}
-              columnVisibility={columnVisibility}
-            />
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody
+            className="grid relative before:content-[''] before:absolute before:inset-0 before:bg-primary/5 before:animate-pulse"
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+            }}
+          >
+            {isMounted && !isFetching && issues.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={0} className="relative flex items-center">
+                  <div className="sticky left-1/2 -translate-x-1/2">
+                    {isError ? (
+                      <Alert variant="destructive">
+                        <AlertCircle className="size-4" />
+                        <AlertTitle>Error</AlertTitle>
+                        <AlertDescription>
+                          {failureReason?.message}
+                        </AlertDescription>
+                      </Alert>
+                    ) : (
+                      <Alert>
+                        <CircleSlash2 className="size-4" />
+                        <AlertTitle>No issues found</AlertTitle>
+                      </Alert>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : virtualItems.map((virtualRow) => (
+              <IssueRow
+                key={virtualRow.index}
+                row={rows[virtualRow.index]}
+                virtualRow={virtualRow}
+                onClickIssue={(issue) => {
+                  setActiveIssue(issue)
+                  window.history.replaceState(
+                    { ...window.history.state, as: `/issue/${issue.key}`, url: `/issue/${issue.key}` },
+                    "",
+                    `/issue/${issue.key}`,
+                  )
+                }}
+                columnVisibility={columnVisibility}
+              />
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <IssueModal
+        issue={activeIssue}
+        onClose={() => {
+          setActiveIssue(undefined)
+          window.history.replaceState(
+            { ...window.history.state, as: "/", url: "/" },
+            "",
+            "/",
+          )
+        }}
+      />
+    </>
   )
 }
 
@@ -558,3 +579,104 @@ const IssueCell = memo(function IssueCell({
     </TableCell>
   )
 })
+
+function IssueModal({
+  issue,
+  onClose,
+}: {
+  issue: JqlSearchResponse["issues"][number] | undefined,
+  onClose: () => void,
+}) {
+  const isMobile = useIsMobile()
+
+  return isMobile ? (
+    <Drawer
+      open={issue !== undefined}
+      onOpenChange={(open) => { if (!open) { onClose() } }}
+    >
+      <DrawerContent>
+        <DrawerHeader className="text-left">
+          <DrawerTitle>
+            {issue !== undefined ? (
+              <div className="h-full flex flex-col">
+                <Link
+                  href={`/issue/${issue.key}`}
+                  target="_blank"
+                  className="text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
+                >
+                  {issue.key}
+                </Link>
+                <div className="text-2xl">{issue.fields.summary}</div>
+              </div>
+            ) : null}
+          </DrawerTitle>
+          <DrawerDescription></DrawerDescription>
+        </DrawerHeader>
+        <div className="px-6 h-full overflow-y-auto">
+          {issue !== undefined ? (
+            <Issue issue={issue} hideSummary CodeBlockComponent={CodeBlock} />
+          ) : null}
+        </div>
+      </DrawerContent>
+    </Drawer>
+  ) : (
+    <Dialog
+      open={issue !== undefined}
+      onOpenChange={(open) => { if (!open) { onClose() } }}
+    >
+      <DialogContent className="w-4xl grid-rows-[auto_1fr]">
+        <DialogHeader>
+          <DialogTitle>
+            {issue !== undefined ? (
+              <div className="h-full flex flex-col">
+                <Link
+                  href={`/issue/${issue.key}`}
+                  target="_blank"
+                  className="text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
+                >
+                  {issue.key}
+                </Link>
+                <div className="text-2xl font-bold">{issue.fields.summary}</div>
+              </div>
+            ) : null}
+          </DialogTitle>
+          <DialogDescription></DialogDescription>
+        </DialogHeader>
+        <div className="h-full overflow-y-auto">
+          {issue !== undefined ? (
+            <Issue issue={issue} hideSummary CodeBlockComponent={CodeBlock} />
+          ) : null}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function CodeBlock({
+  text,
+  lang,
+}: {
+  text: string,
+  lang: BundledLanguage,
+}) {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const highlighter = useStore(store, (state) => state.highlighter)
+
+  useLayoutEffect(() => {
+    void (async () => {
+      const out = (await highlighter).codeToHtml(text, {
+        lang,
+        themes: {
+          dark: "github-dark",
+          light: "github-light",
+        },
+      })
+      if (containerRef.current !== null) {
+        containerRef.current.innerHTML = out
+      }
+    })()
+  }, [highlighter, lang, text])
+
+  return <div ref={containerRef}></div>
+}
