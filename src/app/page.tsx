@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { keepPreviousData, useInfiniteQuery, type QueryFunction } from "@tanstack/react-query"
 import { memo, useEffect, useMemo, useRef } from "react"
-import { createLanguageDetector, store, type IssueWithConfidence } from "@/lib/store"
+import { store } from "@/lib/store"
 import { AlertCircle, CircleSlash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLocalStorageState } from "@/hooks/use-local-storage-state"
@@ -43,11 +43,11 @@ type QueryKey = readonly [
   hideNonEnglishIssues: boolean,
 ]
 
-const queryFn: QueryFunction<IssueWithConfidence[], QueryKey, number> = async ({
+const queryFn: QueryFunction<JqlSearchResponse["issues"], QueryKey, number> = async ({
   pageParam,
   signal,
-  queryKey: [, project, query, hideNonEnglishIssues],
-}): Promise<IssueWithConfidence[]> => {
+  queryKey: [, project, query],
+}): Promise<JqlSearchResponse["issues"]> => {
   const response = await jqlSearchPost({
     project,
     advanced: true,
@@ -55,22 +55,7 @@ const queryFn: QueryFunction<IssueWithConfidence[], QueryKey, number> = async ({
     startAt: pageParam * maxResults,
     maxResults,
   }, signal)
-  const issues = response.issues as IssueWithConfidence[]
-  if (hideNonEnglishIssues) {
-    const languageDetector = await createLanguageDetector()
-    if (languageDetector !== undefined) {
-      await Promise.all(issues.map(async (issue) => {
-        const results = await languageDetector.detect(issue.fields.summary)
-        for (const { detectedLanguage, confidence } of results) {
-          if (detectedLanguage === "en") {
-            issue.englishConfidence = confidence
-            break
-          }
-        }
-      }))
-    }
-  }
-  return issues
+  return response.issues
 }
 
 export default function Page() {
@@ -104,12 +89,12 @@ export default function Page() {
     placeholderData: keepPreviousData,
     retry: false,
   })
-  const issues: IssueWithConfidence[] = useMemo(
+  const issues: JqlSearchResponse["issues"] = useMemo(
     () => data?.pages.flatMap((page) => page) ?? [],
     [data?.pages],
   )
 
-  const columns: ColumnDef<IssueWithConfidence>[] = useMemo(() => [
+  const columns: ColumnDef<JqlSearchResponse["issues"][number]>[] = useMemo(() => [
     {
       id: "issuetype",
       meta: { title: "Issue Type" },
@@ -346,17 +331,7 @@ export default function Page() {
       accessorFn: (row) => row.fields.customfield_10050,
       size: 100,
     },
-    /* {
-      id: "English Confidence",
-      accessorFn: (row) => row.englishConfidence,
-      size: 140,
-      header: EnglishConfidenceMenu,
-      cell: ({ getValue }) => {
-        const value = getValue<number | undefined>()
-        return value !== undefined ? <div className="text-right">{Math.round(value * 100)}%</div> : null
-      }
-    }, */
-  ] satisfies ColumnDef<IssueWithConfidence>[], [])
+  ] satisfies ColumnDef<JqlSearchResponse["issues"][number]>[], [])
 
   const table = useReactTable({
     data: issues,
@@ -528,9 +503,9 @@ const IssueRow = memo(function IssueRow({
   onClickIssue,
   columnVisibility: _columnVisibility,
 }: {
-  row: Row<IssueWithConfidence> | undefined,
+  row: Row<JqlSearchResponse["issues"][number]> | undefined,
   virtualRow: VirtualItem,
-  onClickIssue: (issue: IssueWithConfidence) => void,
+  onClickIssue: (issue: JqlSearchResponse["issues"][number]) => void,
   columnVisibility: VisibilityState,
 }) {
   return row !== undefined ? (
@@ -571,7 +546,7 @@ const IssueRow = memo(function IssueRow({
 const IssueCell = memo(function IssueCell({
   cell,
 }: {
-  cell: Cell<IssueWithConfidence, unknown>,
+  cell: Cell<JqlSearchResponse["issues"][number], unknown>,
 }) {
   return (
     <TableCell
