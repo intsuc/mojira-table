@@ -1,6 +1,6 @@
 "use client"
 
-import { useLayoutEffect, useRef } from "react"
+import { useLayoutEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
@@ -15,13 +15,20 @@ export function Modal() {
   const router = useRouter()
   const isMobile = useIsMobile()
   const activeIssue = useStore(store, (state) => state.activeIssue)!
+  const [isOpen, setIsOpen] = useState(true)
 
   return isMobile ? (
     <Drawer
-      open
-      onOpenChange={(open) => { if (!open) { router.back() } }}
+      open={isOpen}
+      onOpenChange={setIsOpen}
     >
-      <DrawerContent>
+      <DrawerContent
+        onAnimationEnd={() => {
+          if (!isOpen) {
+            router.back()
+          }
+        }}
+      >
         <DrawerHeader className="text-left">
           <DrawerTitle>
             <div className="h-full flex flex-col">
@@ -44,10 +51,17 @@ export function Modal() {
     </Drawer>
   ) : (
     <Dialog
-      open
-      onOpenChange={(open) => { if (!open) { router.back() } }}
+      open={isOpen}
+      onOpenChange={setIsOpen}
     >
-      <DialogContent className="w-4xl grid-rows-[auto_1fr]">
+      <DialogContent
+        onAnimationEnd={() => {
+          if (!isOpen) {
+            router.back()
+          }
+        }}
+        className="w-4xl grid-rows-[auto_1fr]"
+      >
         <DialogHeader>
           <DialogTitle>
             <div className="h-full flex flex-col">
