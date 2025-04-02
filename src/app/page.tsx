@@ -22,10 +22,9 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 
 declare module "@tanstack/react-table" {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-object-type
   interface TableMeta<TData extends RowData> {
-    hideNonEnglishIssues: boolean,
-    setHideNonEnglishIssues: (value: boolean) => void,
+    //
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -40,7 +39,6 @@ type QueryKey = readonly [
   "issues",
   project: JqlSearchRequest["project"],
   query: string,
-  hideNonEnglishIssues: boolean,
 ]
 
 const queryFn: QueryFunction<JqlSearchResponse["issues"], QueryKey, number> = async ({
@@ -64,7 +62,6 @@ export default function Page() {
   const [columnFilters, setColumnFilters] = useLocalStorageState<ColumnFiltersState>("columnFilters", [])
   const [columnVisibility, setColumnVisibility] = useLocalStorageState<VisibilityState>("columnVisibility", {})
   const [search, setSearch] = useLocalStorageState<JqlSearchRequest["search"]>("search", "", (x) => x, (x) => x)
-  const [hideNonEnglishIssues, setHideNonEnglishIssues] = useLocalStorageState("hideNonEnglishIssues", false, (x) => x.toString(), (x) => x === "true")
 
   const query = useMemo(
     () => buildQuery(project, search, sorting, columnFilters),
@@ -80,7 +77,7 @@ export default function Page() {
     isError,
     failureReason,
   } = useInfiniteQuery({
-    queryKey: ["issues", project, query, hideNonEnglishIssues],
+    queryKey: ["issues", project, query],
     queryFn,
     initialPageParam: 0,
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
@@ -348,10 +345,6 @@ export default function Page() {
       sorting,
       columnFilters,
       columnVisibility,
-    },
-    meta: {
-      hideNonEnglishIssues,
-      setHideNonEnglishIssues,
     },
   })
   const { rows } = table.getRowModel()
