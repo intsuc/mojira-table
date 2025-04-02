@@ -437,7 +437,7 @@ export default function Page() {
                   minWidth: header.getSize(),
                   maxWidth: header.getSize(),
                 }}
-                className="truncate"
+                className="px-0"
               >
                 {header.isPlaceholder
                   ? null
