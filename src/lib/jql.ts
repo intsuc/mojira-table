@@ -217,12 +217,14 @@ export function buildQuery(
   sorting: SortingState,
   _columnFilters: ColumnFiltersState,
 ): string {
+  let query = ""
+
   if (search.length > 0) {
     const basic = isValidWord(search)
-    return basic ? `text ~ "${search}"` : search
+    query += basic ? `text ~ "${search}"` : search
+  } else {
+    query += `project = ${project}`
   }
-
-  let query = `project = ${project}`
 
   if (sorting.length > 0) {
     query += " order by"
