@@ -1,7 +1,7 @@
 "use client"
 
 import { jqlSearchPost, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
-import { type Cell, type Column, type ColumnDef, type ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type Row, type RowData, type SortingState, useReactTable, VisibilityState } from "@tanstack/react-table"
+import { type Cell, type ColumnDef, type ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type Row, type RowData, type SortingState, useReactTable, VisibilityState } from "@tanstack/react-table"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -612,7 +612,10 @@ const IssueRow = memo(function IssueRow({
         height: `${virtualRow.size}px`,
         transform: `translateY(${virtualRow.start}px)`,
       }}
-      className="absolute top-0 left-0 w-full truncate bg-background hover:bg-accent "
+      className={cn(
+        "absolute top-0 left-0 w-full truncate hover:bg-accent",
+        row.index & 1 ? "bg-background" : "bg-primary-foreground",
+      )}
     >
       {row.getVisibleCells().map((cell) => (
         <IssueCell
