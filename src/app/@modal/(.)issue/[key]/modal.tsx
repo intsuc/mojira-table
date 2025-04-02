@@ -28,7 +28,6 @@ export function Modal() {
               <Link
                 href={`/issue/${activeIssue.key}`}
                 target="_blank"
-                rel="noopener noreferrer"
                 className="text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
               >
                 {activeIssue.key}
@@ -55,7 +54,6 @@ export function Modal() {
               <Link
                 href={`/issue/${activeIssue.key}`}
                 target="_blank"
-                rel="noopener noreferrer"
                 className="text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
               >
                 {activeIssue.key}
