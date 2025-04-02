@@ -61,10 +61,10 @@ export default function Page() {
   const [sorting, setSorting] = useLocalStorageState<SortingState>("sorting", [{ id: "created", desc: true }])
   const [columnFilters, setColumnFilters] = useLocalStorageState<ColumnFiltersState>("columnFilters", [])
   const [columnVisibility, setColumnVisibility] = useLocalStorageState<VisibilityState>("columnVisibility", {})
-  const [search, setSearch] = useLocalStorageState<JqlSearchRequest["search"]>("search", "", (x) => x, (x) => x)
+  const [search, setSearch] = useLocalStorageState<JqlSearchRequest["search"] | undefined>("search", undefined, (x) => x ?? "", (x) => x)
 
   const query = useMemo(
-    () => buildQuery(project, search, sorting, columnFilters),
+    () => search === undefined ? undefined : buildQuery(project, search, sorting, columnFilters),
     [columnFilters, project, search, sorting],
   )
 
@@ -77,7 +77,8 @@ export default function Page() {
     isError,
     failureReason,
   } = useInfiniteQuery({
-    queryKey: ["issues", project, query],
+    enabled: query !== undefined,
+    queryKey: ["issues", project, query!],
     queryFn,
     initialPageParam: 0,
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
@@ -400,7 +401,7 @@ export default function Page() {
                 break
               }
               case "Escape": {
-                e.currentTarget.value = search
+                e.currentTarget.value = search ?? ""
                 break
               }
             }
@@ -460,7 +461,7 @@ export default function Page() {
                         {failureReason?.message}
                       </AlertDescription>
                     </Alert>
-                  ) : !isFetching ? (
+                  ) : !isFetching && query !== undefined ? (
                     <Alert>
                       <CircleSlash2 className="size-4" />
                       <AlertTitle>No issues found</AlertTitle>
