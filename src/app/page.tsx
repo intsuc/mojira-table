@@ -20,6 +20,7 @@ import { DataTableColumnHeader } from "@/components/data-table-column-header"
 import { DataTableViewOptions } from "@/components/data-table-view-options"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { useIsMounted } from "@/hooks/use-mounted"
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-object-type
@@ -57,14 +58,16 @@ const queryFn: QueryFunction<JqlSearchResponse["issues"], QueryKey, number> = as
 }
 
 export default function Page() {
+  const isMounted = useIsMounted()
+
   const [project, setProject] = useLocalStorageState<JqlSearchRequest["project"]>("project", "MC", (x) => x, (x) => x as JqlSearchRequest["project"])
-  const [sorting, setSorting] = useLocalStorageState<SortingState>("sorting", [{ id: "created", desc: true }])
+  const [sorting, setSorting] = useLocalStorageState<SortingState>("sorting", [])
   const [columnFilters, setColumnFilters] = useLocalStorageState<ColumnFiltersState>("columnFilters", [])
   const [columnVisibility, setColumnVisibility] = useLocalStorageState<VisibilityState>("columnVisibility", {})
-  const [search, setSearch] = useLocalStorageState<JqlSearchRequest["search"] | undefined>("search", undefined, (x) => x ?? "", (x) => x)
+  const [search, setSearch] = useLocalStorageState<JqlSearchRequest["search"]>("search", "", (x) => x, (x) => x)
 
   const query = useMemo(
-    () => search === undefined ? undefined : buildQuery(project, search, sorting, columnFilters),
+    () => buildQuery(project, search, sorting, columnFilters),
     [columnFilters, project, search, sorting],
   )
 
@@ -77,7 +80,7 @@ export default function Page() {
     isError,
     failureReason,
   } = useInfiniteQuery({
-    enabled: query !== undefined,
+    enabled: isMounted,
     queryKey: ["issues", project, query!],
     queryFn,
     initialPageParam: 0,
@@ -352,7 +355,7 @@ export default function Page() {
 
   const parentRef = useRef<HTMLTableElement>(null)
   const rowVirtualizer = useVirtualizer({
-    count: issues.length + (hasNextPage ? maxResults : 0),
+    count: Math.max(maxResults, issues.length + (hasNextPage ? maxResults : 0)),
     getScrollElement: () => parentRef.current,
     estimateSize: () => 40,
     measureElement: () => 40,
@@ -401,7 +404,7 @@ export default function Page() {
                 break
               }
               case "Escape": {
-                e.currentTarget.value = search ?? ""
+                e.currentTarget.value = search
                 break
               }
             }
@@ -444,12 +447,12 @@ export default function Page() {
           </TableRow>
         </TableHeader>
         <TableBody
-          className="grid relative before:content-[''] before:absolute before:inset-0 before:bg-primary/10 before:animate-pulse"
+          className="grid relative before:content-[''] before:absolute before:inset-0 before:bg-primary/5 before:animate-pulse"
           style={{
             height: `${rowVirtualizer.getTotalSize()}px`,
           }}
         >
-          {issues.length === 0 ? (
+          {isMounted && !isFetching && issues.length === 0 ? (
             <TableRow>
               <TableCell colSpan={0} className="relative flex items-center">
                 <div className="sticky left-1/2 -translate-x-1/2">
@@ -461,12 +464,12 @@ export default function Page() {
                         {failureReason?.message}
                       </AlertDescription>
                     </Alert>
-                  ) : !isFetching && query !== undefined ? (
+                  ) : (
                     <Alert>
                       <CircleSlash2 className="size-4" />
                       <AlertTitle>No issues found</AlertTitle>
                     </Alert>
-                  ) : null}
+                  )}
                 </div>
               </TableCell>
             </TableRow>
