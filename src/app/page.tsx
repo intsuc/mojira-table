@@ -469,29 +469,25 @@ export default function Page() {
           <TableHeader className={cn(
             "grid sticky top-0 z-10 w-full bg-background shadow-[0_1px_0_var(--border)]",
           )}>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead
-                      key={header.id}
-                      style={{
-                        minWidth: header.getSize(),
-                        maxWidth: header.getSize(),
-                      }}
-                      className="truncate"
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                    </TableHead>
-                  )
-                })}
-              </TableRow>
-            ))}
+            <TableRow>
+              {table.getFlatHeaders().map((header) => (
+                <TableHead
+                  key={header.id}
+                  style={{
+                    minWidth: header.getSize(),
+                    maxWidth: header.getSize(),
+                  }}
+                  className="truncate"
+                >
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                </TableHead>
+              ))}
+            </TableRow>
           </TableHeader>
           <TableBody
             className="grid relative before:content-[''] before:absolute before:inset-0 before:bg-primary/10 before:animate-pulse"
