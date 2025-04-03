@@ -471,6 +471,7 @@ function IssueTable({
             <TableRow
               key={row.id}
               onClick={() => onClickIssue(row.original)}
+              className="h-10"
             >
               {row.getVisibleCells().map(cell => (
                 <TableCell
