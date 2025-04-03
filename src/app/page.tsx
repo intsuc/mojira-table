@@ -1,22 +1,19 @@
 "use client"
 
 import { jqlSearchPost, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
-import { type Cell, type Column, type ColumnDef, type ColumnFiltersState, ColumnPinningState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type Row, type RowData, type SortingState, useReactTable, VisibilityState } from "@tanstack/react-table"
+import { type Table as ReactTable, type Column, type ColumnDef, type ColumnFiltersState, ColumnPinningState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type PaginationState, type RowData, type SortingState, useReactTable, VisibilityState } from "@tanstack/react-table"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
 import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { keepPreviousData, useInfiniteQuery, type QueryFunction } from "@tanstack/react-query"
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react"
+import { keepPreviousData, useQuery, type QueryFunction } from "@tanstack/react-query"
+import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { store } from "@/lib/store"
-import { AlertCircle, CircleSlash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLocalStorageState } from "@/hooks/use-local-storage-state"
-import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual"
 import { buildQuery } from "@/lib/jql"
 import { DataTableColumnHeader } from "@/components/data-table-column-header"
 import { DataTableViewOptions } from "@/components/data-table-view-options"
@@ -40,27 +37,34 @@ declare module "@tanstack/react-table" {
   }
 }
 
-const maxResults = 25
-
 type QueryKey = readonly [
   "issues",
   project: JqlSearchRequest["project"],
   query: string,
+  pagination: PaginationState,
 ]
 
-const queryFn: QueryFunction<JqlSearchResponse["issues"], QueryKey, number> = async ({
-  pageParam,
+type QueryResult = {
+  issues: JqlSearchResponse["issues"],
+  total: number,
+}
+
+const queryFn: QueryFunction<QueryResult, QueryKey, number> = async ({
   signal,
-  queryKey: [, project, query],
-}): Promise<JqlSearchResponse["issues"]> => {
+  queryKey: [, project, query, { pageIndex, pageSize }],
+}): Promise<QueryResult> => {
   const response = await jqlSearchPost({
     project,
     advanced: true,
     search: query,
-    startAt: pageParam * maxResults,
-    maxResults,
+    startAt: pageIndex * pageSize,
+    maxResults: pageSize,
   }, signal)
-  return response.issues
+
+  return {
+    issues: response.issues,
+    total: response.total,
+  }
 }
 
 export default function Page() {
@@ -73,6 +77,11 @@ export default function Page() {
   const [columnPinning, setColumnPinning] = useLocalStorageState<ColumnPinningState>("columnPinning", {})
   const [search, setSearch] = useLocalStorageState<JqlSearchRequest["search"]>("search", "", (x) => x, (x) => x)
 
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 20,
+  })
+
   const query = useMemo(
     () => buildQuery(project, search, sorting, columnFilters),
     [columnFilters, project, search, sorting],
@@ -80,27 +89,15 @@ export default function Page() {
 
   const {
     data,
-    fetchNextPage,
-    hasNextPage,
     isFetching,
-    isFetchingNextPage,
-    isError,
-    failureReason,
-  } = useInfiniteQuery({
+  } = useQuery({
     enabled: isMounted,
-    queryKey: ["issues", project, query!],
+    queryKey: ["issues", project, query!, pagination],
     queryFn,
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
-      lastPage?.length < maxResults ? undefined : lastPageParam + 1,
-    refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
     retry: false,
   })
-  const issues: JqlSearchResponse["issues"] = useMemo(
-    () => data?.pages.flatMap((page) => page) ?? [],
-    [data?.pages],
-  )
+  const issues = data?.issues ?? []
 
   const columns: ColumnDef<JqlSearchResponse["issues"][number]>[] = useMemo(() => [
     {
@@ -344,6 +341,7 @@ export default function Page() {
   const table = useReactTable({
     data: issues,
     columns,
+    rowCount: data?.total,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
@@ -353,38 +351,23 @@ export default function Page() {
     manualFiltering: true,
     onColumnVisibilityChange: setColumnVisibility,
     onColumnPinningChange: setColumnPinning,
+    onPaginationChange: setPagination,
+    manualPagination: true,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       columnPinning,
+      pagination,
     },
   })
-  const { rows } = table.getRowModel()
-
-  const parentRef = useRef<HTMLTableElement>(null)
-  const rowVirtualizer = useVirtualizer({
-    count: Math.max(maxResults, issues.length + (hasNextPage ? maxResults : 0)),
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 40,
-    measureElement: () => 40,
-    overscan: 0,
-  })
-  const virtualItems = rowVirtualizer.getVirtualItems()
-  useEffect(() => {
-    const lastItem = virtualItems[virtualItems.length - 1]
-    if (lastItem !== undefined && lastItem.index >= issues.length - 1 && hasNextPage && !isFetchingNextPage) {
-      void fetchNextPage()
-    }
-  }, [hasNextPage, fetchNextPage, issues.length, isFetchingNextPage, virtualItems])
-
-  useEffect(() => {
-    if (data?.pageParams.length === 1) {
-      parentRef.current?.scrollTo({ top: 0, behavior: "smooth" })
-    }
-  }, [data?.pageParams.length])
 
   const [activeIssue, setActiveIssue] = useState<JqlSearchResponse["issues"][number] | undefined>(undefined)
+
+  const handleClickIssue = (issue: JqlSearchResponse["issues"][number]) => {
+    setActiveIssue(issue)
+    window.history.replaceState(null, "", `/issue/${issue.key}`,)
+  }
 
   return (
     <>
@@ -428,169 +411,93 @@ export default function Page() {
         <div className="relative h-0.5 overflow-clip">
           <div className={cn(
             "absolute left-0 top-0 inset-0 bg-blue-500 animate-indeterminate origin-left transition-opacity",
-            isFetching && !isFetchingNextPage ? "opacity-100" : "opacity-0",
+            isFetching ? "opacity-100" : "opacity-0",
           )}></div>
         </div>
 
-        <Table ref={parentRef} className="h-full grid grid-rows-[auto_1fr] overflow-scroll overscroll-none border-t">
-          <TableHeader className={cn(
-            "grid sticky top-0 z-1 w-full shadow-[0_1px_0_var(--border)]",
-          )}>
-            <TableRow>
-              {table.getFlatHeaders().map((header) => (
-                <TableHead
-                  key={header.id}
-                  style={{
-                    ...getCommonPinningStyles(header.column),
-                    minWidth: header.getSize(),
-                    maxWidth: header.getSize(),
-                  }}
-                  className="px-0 bg-background"
-                >
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody
-            className="grid relative before:content-[''] before:absolute before:inset-0 before:bg-primary/5 before:animate-pulse"
-            style={{
-              height: `${rowVirtualizer.getTotalSize()}px`,
-            }}
-          >
-            {isMounted && !isFetching && issues.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={0} className="relative flex items-center">
-                  <div className="sticky left-1/2 -translate-x-1/2">
-                    {isError ? (
-                      <Alert variant="destructive">
-                        <AlertCircle className="size-4" />
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>
-                          {failureReason?.message}
-                        </AlertDescription>
-                      </Alert>
-                    ) : (
-                      <Alert>
-                        <CircleSlash2 className="size-4" />
-                        <AlertTitle>No issues found</AlertTitle>
-                      </Alert>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : virtualItems.map((virtualRow) => (
-              <IssueRow
-                key={virtualRow.index}
-                row={rows[virtualRow.index]}
-                virtualRow={virtualRow}
-                onClickIssue={(issue) => {
-                  setActiveIssue(issue)
-                  window.history.replaceState(
-                    { ...window.history.state, as: `/issue/${issue.key}`, url: `/issue/${issue.key}` },
-                    "",
-                    `/issue/${issue.key}`,
-                  )
-                }}
-                columnVisibility={columnVisibility}
-              />
-            ))}
-          </TableBody>
-        </Table>
+        <IssueTable
+          table={table}
+          onClickIssue={handleClickIssue}
+        />
       </div>
 
       <IssueModal
         issue={activeIssue}
         onClose={() => {
           setActiveIssue(undefined)
-          window.history.replaceState(
-            { ...window.history.state, as: "/", url: "/" },
-            "",
-            "/",
-          )
+          window.history.replaceState(null, "", "/")
         }}
       />
     </>
   )
 }
 
-const IssueRow = memo(function IssueRow({
-  row,
-  virtualRow,
+function IssueTable({
+  table,
   onClickIssue,
-  columnVisibility: _columnVisibility,
 }: {
-  row: Row<JqlSearchResponse["issues"][number]> | undefined,
-  virtualRow: VirtualItem,
+  table: ReactTable<JqlSearchResponse["issues"][number]>,
   onClickIssue: (issue: JqlSearchResponse["issues"][number]) => void,
-  columnVisibility: VisibilityState,
-}) {
-  const cellClassName = row !== undefined ? row.index & 1 ? "bg-background" : "bg-primary-foreground" : undefined
-
-  return row !== undefined ? (
-    <TableRow
-      data-index={virtualRow.index}
-      data-state={row.getIsSelected() && "selected"}
-      onClick={() => onClickIssue(row.original)}
-      style={{
-        height: `${virtualRow.size}px`,
-        transform: `translateY(${virtualRow.start}px)`,
-      }}
-      className={cn(
-        "absolute top-0 left-0 w-full hover:bg-accent",
-      )}
-    >
-      {row.getVisibleCells().map((cell) => (
-        <IssueCell
-          key={cell.id}
-          cell={cell}
-          className={cellClassName}
-        />
-      ))}
-    </TableRow>
-  ) : (
-    <TableRow
-      key={virtualRow.index}
-      style={{
-        height: `${virtualRow.size}px`,
-        transform: `translateY(${virtualRow.start}px)`,
-      }}
-      className="absolute top-0 left-0 w-full truncate"
-    >
-      <TableCell colSpan={0} className="p-0 h-full flex"></TableCell>
-    </TableRow>
-  )
-})
-
-const IssueCell = memo(function IssueCell({
-  cell,
-  className,
-}: {
-  cell: Cell<JqlSearchResponse["issues"][number], unknown>,
-  className?: string,
 }) {
   return (
-    <TableCell
-      key={cell.id}
-      style={{
-        ...getCommonPinningStyles(cell.column),
-        minWidth: cell.column.getSize(),
-        maxWidth: cell.column.getSize(),
-      }}
-      className={cn(
-        "truncate",
-        className,
-      )}
-    >
-      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-    </TableCell>
+    <Table className="h-full grid grid-rows-[auto_1fr] overflow-scroll overscroll-none border-t border-separate border-spacing-0">
+      <TableHeader className="sticky top-0 z-2 border-b">
+        <TableRow>
+          {table.getFlatHeaders().map((header) => (
+            <TableHead
+              key={header.id}
+              style={{
+                ...getCommonPinningStyles(header.column),
+                minWidth: header.getSize(),
+                maxWidth: header.getSize(),
+              }}
+              className="px-0 bg-background"
+            >
+              {header.isPlaceholder ? null : flexRender(
+                header.column.columnDef.header,
+                header.getContext(),
+              )}
+            </TableHead>
+          ))}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {table.getRowModel().rows.map(row => {
+          const cellClassName = row !== undefined ? row.index & 1 ? "bg-background" : "bg-secondary" : undefined
+
+          return (
+            <TableRow
+              key={row.id}
+              onClick={() => onClickIssue(row.original)}
+            >
+              {row.getVisibleCells().map(cell => (
+                <TableCell
+                  key={cell.id}
+                  className={cn(
+                    "truncate border-b",
+                    cellClassName,
+                  )}
+                  style={{
+                    ...getCommonPinningStyles(cell.column),
+                    minWidth: cell.column.getSize(),
+                    maxWidth: cell.column.getSize(),
+                  }}
+                >
+                  {flexRender(
+                    cell.column.columnDef.cell,
+                    cell.getContext(),
+                  )}
+                </TableCell>
+              ))}
+            </TableRow>
+          )
+        })}
+      </TableBody>
+      <TableFooter>
+      </TableFooter>
+    </Table>
   )
-})
+}
 
 function getCommonPinningStyles(column: Column<JqlSearchResponse["issues"][number]>): CSSProperties {
   const isPinned = column.getIsPinned()
@@ -598,9 +505,8 @@ function getCommonPinningStyles(column: Column<JqlSearchResponse["issues"][numbe
   const isFirstRightPinnedColumn = isPinned === "right" && column.getIsFirstColumn("right")
 
   return {
-    boxShadow: isLastLeftPinnedColumn ? "-1px 0 1px -1px var(--primary) inset"
-      : isFirstRightPinnedColumn ? "1px 0 1px -1px var(--primary) inset"
-        : undefined,
+    borderRight: isLastLeftPinnedColumn ? "1px solid var(--border)" : undefined,
+    borderLeft: isFirstRightPinnedColumn ? "1px solid var(--border)" : undefined,
     left: isPinned === "left" ? `${column.getStart("left")}px` : undefined,
     right: isPinned === "right" ? `${column.getAfter("right")}px` : undefined,
     opacity: isPinned ? 0.95 : 1,
