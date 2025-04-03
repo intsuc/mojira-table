@@ -468,7 +468,7 @@ function IssueTable({
                 minWidth: header.getSize(),
                 maxWidth: header.getSize(),
               }}
-              className="px-0 bg-background"
+              className="px-0 bg-background/95"
             >
               {header.isPlaceholder ? null : flexRender(
                 header.column.columnDef.header,
@@ -478,22 +478,20 @@ function IssueTable({
           ))}
         </TableRow>
       </TableHeader>
-      <TableBody className="bg-secondary">
+      <TableBody>
         {table.getRowModel().rows.map(row => {
-          const cellClassName = row !== undefined ? row.index & 1 ? "bg-background" : "bg-secondary" : undefined
-
           return (
             <TableRow
               key={row.id}
               onClick={() => onClickIssue(row.original)}
-              className="h-10"
+              className="group h-10"
             >
               {row.getVisibleCells().map(cell => (
                 <TableCell
                   key={cell.id}
                   className={cn(
-                    "truncate border-b",
-                    cellClassName,
+                    "truncate border-b bg-background",
+                    cell.column.getIsPinned() ? "" : "group-hover:bg-muted/50",
                   )}
                   style={{
                     ...getCommonPinningStyles(cell.column),
