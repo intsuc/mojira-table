@@ -26,6 +26,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { Issue } from "@/components/issue"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarProvider, SidebarRail } from "@/components/ui/sidebar"
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-object-type
@@ -372,22 +373,36 @@ export default function Page() {
   }
 
   return (
-    <>
-      <div className="h-full flex flex-col">
-        <div className="col-span-2 p-2 flex flex-row gap-2 overflow-x-auto overflow-y-hidden">
-          <Select value={project} onValueChange={setProject as (value: JqlSearchRequest["project"]) => void}>
-            <SelectTrigger className="min-w-[220px]">
-              <SelectValue placeholder="Project" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Project</SelectLabel>
-                {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>{project.label}</SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+    <SidebarProvider className="h-full overflow-hidden">
+      <Sidebar>
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <Select value={project} onValueChange={setProject as (value: JqlSearchRequest["project"]) => void}>
+                <SelectTrigger className="min-w-full">
+                  <SelectValue placeholder="Project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Project</SelectLabel>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>{project.label}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup />
+          <SidebarGroup />
+        </SidebarContent>
+        <SidebarFooter />
+        <SidebarRail />
+      </Sidebar>
+      <div className="w-full h-full grid grid-flow-col grid-rows-[auto_auto_1fr]">
+        <div className="col-span-2 p-2 min-h-fit flex flex-row gap-2 overflow-x-auto overflow-y-hidden">
           <Input
             defaultValue={search}
             placeholder="Search"
@@ -410,7 +425,7 @@ export default function Page() {
           <ThemeToggle />
         </div>
 
-        <div className="relative h-0.5 overflow-clip">
+        <div className="relative h-0.5">
           <div className={cn(
             "absolute left-0 top-0 inset-0 bg-blue-500 animate-indeterminate origin-left transition-opacity",
             isFetching ? "opacity-100" : "opacity-0",
@@ -430,7 +445,7 @@ export default function Page() {
           window.history.replaceState(null, "", "/")
         }}
       />
-    </>
+    </SidebarProvider>
   )
 }
 
