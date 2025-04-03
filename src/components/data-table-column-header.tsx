@@ -1,5 +1,5 @@
 import { Column } from "@tanstack/react-table"
-import { ArrowDown, ArrowDown01, ArrowDown10, EyeOff } from "lucide-react"
+import { ArrowDown, ArrowDown01, ArrowDown10, EyeOff, PanelLeftClose, PanelRightClose, PinOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
@@ -45,6 +45,19 @@ export function DataTableColumnHeader<TData, TValue>({
         <DropdownMenuItem onClick={() => column.toggleSorting(true)}>
           <ArrowDown10 className="h-3.5 w-3.5 text-muted-foreground/70" />
           Desc
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => column.pin(false)}>
+          <PinOff className="h-3.5 w-3.5 text-muted-foreground/70" />
+          Unpin
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => column.pin("left")}>
+          <PanelLeftClose className="h-3.5 w-3.5 text-muted-foreground/70" />
+          Pin Left
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => column.pin("right")}>
+          <PanelRightClose className="h-3.5 w-3.5 text-muted-foreground/70" />
+          Pin Right
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => column.toggleVisibility(false)}>

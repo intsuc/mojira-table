@@ -1,7 +1,7 @@
 "use client"
 
 import { jqlSearchPost, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
-import { type Cell, type ColumnDef, type ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type Row, type RowData, type SortingState, useReactTable, VisibilityState } from "@tanstack/react-table"
+import { type Cell, type ColumnDef, type ColumnFiltersState, ColumnPinningState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type Row, type RowData, type SortingState, useReactTable, VisibilityState } from "@tanstack/react-table"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -70,6 +70,7 @@ export default function Page() {
   const [sorting, setSorting] = useLocalStorageState<SortingState>("sorting", [])
   const [columnFilters, setColumnFilters] = useLocalStorageState<ColumnFiltersState>("columnFilters", [])
   const [columnVisibility, setColumnVisibility] = useLocalStorageState<VisibilityState>("columnVisibility", {})
+  const [columnPinning, setColumnPinning] = useLocalStorageState<ColumnPinningState>("columnPinning", {})
   const [search, setSearch] = useLocalStorageState<JqlSearchRequest["search"]>("search", "", (x) => x, (x) => x)
 
   const query = useMemo(
@@ -351,10 +352,12 @@ export default function Page() {
     getFilteredRowModel: getFilteredRowModel(),
     manualFiltering: true,
     onColumnVisibilityChange: setColumnVisibility,
+    onColumnPinningChange: setColumnPinning,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
+      columnPinning,
     },
   })
   const { rows } = table.getRowModel()
