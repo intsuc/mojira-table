@@ -1,7 +1,7 @@
 "use client"
 
 import { jqlSearchPost, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
-import { type Cell, type ColumnDef, type ColumnFiltersState, ColumnPinningState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type Row, type RowData, type SortingState, useReactTable, VisibilityState } from "@tanstack/react-table"
+import { type Cell, type Column, type ColumnDef, type ColumnFiltersState, ColumnPinningState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type Row, type RowData, type SortingState, useReactTable, VisibilityState } from "@tanstack/react-table"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { keepPreviousData, useInfiniteQuery, type QueryFunction } from "@tanstack/react-query"
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { store } from "@/lib/store"
 import { AlertCircle, CircleSlash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -434,17 +434,18 @@ export default function Page() {
 
         <Table ref={parentRef} className="h-full grid grid-rows-[auto_1fr] overflow-scroll overscroll-none border-t">
           <TableHeader className={cn(
-            "grid sticky top-0 z-10 w-full bg-background shadow-[0_1px_0_var(--border)]",
+            "grid sticky top-0 z-1 w-full shadow-[0_1px_0_var(--border)]",
           )}>
             <TableRow>
               {table.getFlatHeaders().map((header) => (
                 <TableHead
                   key={header.id}
                   style={{
+                    ...getCommonPinningStyles(header.column),
                     minWidth: header.getSize(),
                     maxWidth: header.getSize(),
                   }}
-                  className="px-0"
+                  className="px-0 bg-background"
                 >
                   {header.isPlaceholder
                     ? null
@@ -529,6 +530,8 @@ const IssueRow = memo(function IssueRow({
   onClickIssue: (issue: JqlSearchResponse["issues"][number]) => void,
   columnVisibility: VisibilityState,
 }) {
+  const cellClassName = row !== undefined ? row.index & 1 ? "bg-background" : "bg-primary-foreground" : undefined
+
   return row !== undefined ? (
     <TableRow
       data-index={virtualRow.index}
@@ -539,14 +542,14 @@ const IssueRow = memo(function IssueRow({
         transform: `translateY(${virtualRow.start}px)`,
       }}
       className={cn(
-        "absolute top-0 left-0 w-full truncate hover:bg-accent",
-        row.index & 1 ? "bg-background" : "bg-primary-foreground",
+        "absolute top-0 left-0 w-full hover:bg-accent",
       )}
     >
       {row.getVisibleCells().map((cell) => (
         <IssueCell
           key={cell.id}
           cell={cell}
+          className={cellClassName}
         />
       ))}
     </TableRow>
@@ -566,22 +569,46 @@ const IssueRow = memo(function IssueRow({
 
 const IssueCell = memo(function IssueCell({
   cell,
+  className,
 }: {
   cell: Cell<JqlSearchResponse["issues"][number], unknown>,
+  className?: string,
 }) {
   return (
     <TableCell
       key={cell.id}
       style={{
+        ...getCommonPinningStyles(cell.column),
         minWidth: cell.column.getSize(),
         maxWidth: cell.column.getSize(),
       }}
-      className="truncate"
+      className={cn(
+        "truncate",
+        className,
+      )}
     >
       {flexRender(cell.column.columnDef.cell, cell.getContext())}
     </TableCell>
   )
 })
+
+function getCommonPinningStyles(column: Column<JqlSearchResponse["issues"][number]>): CSSProperties {
+  const isPinned = column.getIsPinned()
+  const isLastLeftPinnedColumn = isPinned === "left" && column.getIsLastColumn("left")
+  const isFirstRightPinnedColumn = isPinned === "right" && column.getIsFirstColumn("right")
+
+  return {
+    boxShadow: isLastLeftPinnedColumn ? "-1px 0 1px -1px var(--primary) inset"
+      : isFirstRightPinnedColumn ? "1px 0 1px -1px var(--primary) inset"
+        : undefined,
+    left: isPinned === "left" ? `${column.getStart("left")}px` : undefined,
+    right: isPinned === "right" ? `${column.getAfter("right")}px` : undefined,
+    opacity: isPinned ? 0.95 : 1,
+    position: isPinned ? "sticky" : "relative",
+    width: column.getSize(),
+    zIndex: isPinned ? 1 : 0,
+  }
+}
 
 function IssueModal({
   issue,
