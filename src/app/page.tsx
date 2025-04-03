@@ -24,6 +24,8 @@ import type { BundledLanguage } from "shiki"
 import Link from "next/link"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Issue } from "@/components/issue"
+import { Button } from "@/components/ui/button"
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-object-type
@@ -440,7 +442,7 @@ function IssueTable({
   onClickIssue: (issue: JqlSearchResponse["issues"][number]) => void,
 }) {
   return (
-    <Table className="h-full grid grid-rows-[auto_1fr] overflow-scroll overscroll-none border-t border-separate border-spacing-0">
+    <Table className="relative h-full grid grid-rows-[auto_1fr_auto] overflow-scroll overscroll-none border-t border-separate border-spacing-0">
       <TableHeader className="sticky top-0 z-2 border-b">
         <TableRow>
           {table.getFlatHeaders().map((header) => (
@@ -461,7 +463,7 @@ function IssueTable({
           ))}
         </TableRow>
       </TableHeader>
-      <TableBody>
+      <TableBody className="bg-secondary">
         {table.getRowModel().rows.map(row => {
           const cellClassName = row !== undefined ? row.index & 1 ? "bg-background" : "bg-secondary" : undefined
 
@@ -493,7 +495,39 @@ function IssueTable({
           )
         })}
       </TableBody>
-      <TableFooter>
+      <TableFooter className="sticky bottom-0 z-2 overflow-x-clip">
+        <TableRow className="flex w-[200%] bg-background/95 hover:!bg-background">
+          <TableCell colSpan={0} className="sticky left-full -translate-x-full flex justify-end gap-4">
+            <div className="flex gap-1 w-fit items-center justify-center text-sm">
+              <div>Page</div>
+              <Input
+                type="number"
+                value={table.getState().pagination.pageIndex + 1}
+                onChange={(e) => {
+                  const pageIndex = e.target.valueAsNumber - 1
+                  table.setPageIndex(pageIndex)
+                }}
+                className="text-right"
+              />
+              <div>of</div>
+              {table.getPageCount()}
+            </div>
+            <div className="flex gap-2">
+              <Button size="icon" variant="outline" onClick={() => table.firstPage()} disabled={!table.getCanPreviousPage()}>
+                <ChevronsLeft />
+              </Button>
+              <Button size="icon" variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+                <ChevronLeft />
+              </Button>
+              <Button size="icon" variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+                <ChevronRight />
+              </Button>
+              <Button size="icon" variant="outline" onClick={() => table.lastPage()} disabled={!table.getCanNextPage()}>
+                <ChevronsRight />
+              </Button>
+            </div>
+          </TableCell>
+        </TableRow>
       </TableFooter>
     </Table>
   )
