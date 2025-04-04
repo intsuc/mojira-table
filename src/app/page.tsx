@@ -9,8 +9,8 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } f
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { keepPreviousData, useQuery, type QueryFunction } from "@tanstack/react-query"
-import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react"
+import { keepPreviousData, useQuery, useQueryClient, type QueryFunction } from "@tanstack/react-query"
+import { useCallback, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { store } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { useLocalStorageState } from "@/hooks/use-local-storage-state"
@@ -43,7 +43,7 @@ declare module "@tanstack/react-table" {
 type QueryKey = readonly [
   "issues",
   project: JqlSearchRequest["project"],
-  query: string,
+  searchQuery: string,
   pagination: PaginationState,
 ]
 
@@ -54,12 +54,12 @@ type QueryResult = {
 
 const queryFn: QueryFunction<QueryResult, QueryKey, number> = async ({
   signal,
-  queryKey: [, project, query, { pageIndex, pageSize }],
+  queryKey: [, project, searchQuery, { pageIndex, pageSize }],
 }): Promise<QueryResult> => {
   const response = await jqlSearchPost({
     project,
     advanced: true,
-    search: query,
+    search: searchQuery,
     startAt: pageIndex * pageSize,
     maxResults: pageSize,
   }, signal)
@@ -85,9 +85,13 @@ export default function Page() {
     pageSize: 20,
   })
 
-  const query = useMemo(
+  const searchQuery = useMemo(
     () => buildQuery(project, search, sorting, columnFilters),
     [columnFilters, project, search, sorting],
+  )
+  const queryKey = useMemo(
+    () => ["issues", project, searchQuery!, pagination] as const,
+    [pagination, project, searchQuery],
   )
 
   const {
@@ -95,7 +99,7 @@ export default function Page() {
     isFetching,
   } = useQuery({
     enabled: isMounted,
-    queryKey: ["issues", project, query!, pagination],
+    queryKey,
     queryFn,
     placeholderData: keepPreviousData,
     retry: false,
@@ -433,6 +437,7 @@ export default function Page() {
             setActiveIssue(issue)
             window.history.replaceState(null, "", `/issue/${issue.key}`,)
           }}
+          queryKey={queryKey}
         />
       </div>
 
@@ -450,10 +455,25 @@ export default function Page() {
 function IssueTable({
   table,
   onClickIssue,
+  queryKey,
 }: {
   table: ReactTable<JqlSearchResponse["issues"][number]>,
   onClickIssue: (issue: JqlSearchResponse["issues"][number]) => void,
+  queryKey: QueryKey,
 }) {
+  const queryClient = useQueryClient()
+
+  const prefetchPage = useCallback((pageIndex: number) => {
+    const [issues, project, searchQuery, pagination] = queryKey
+    queryClient.prefetchQuery({
+      queryKey: [issues, project, searchQuery, { ...pagination, pageIndex }],
+      queryFn,
+      retry: false,
+    })
+  }, [queryClient, queryKey])
+
+  const currentPageIndex = table.getState().pagination.pageIndex
+
   return (
     <Table className="relative h-full grid grid-rows-[auto_1fr_auto] overflow-scroll overscroll-none border-t border-separate border-spacing-0">
       <TableHeader className="sticky top-0 z-2 border-b">
@@ -512,29 +532,49 @@ function IssueTable({
           <TableCell colSpan={0} className="sticky left-full -translate-x-full flex justify-end gap-4">
             <div className="flex gap-1 w-fit items-center justify-center text-sm">
               <div>Page</div>
-              <Input
-                type="number"
-                value={table.getState().pagination.pageIndex + 1}
-                onChange={(e) => {
-                  const pageIndex = e.target.valueAsNumber - 1
-                  table.setPageIndex(pageIndex)
-                }}
-                className="text-right"
-              />
+              {currentPageIndex + 1}
               <div>of</div>
               {table.getPageCount()}
             </div>
             <div className="flex gap-2">
-              <Button size="icon" variant="outline" onClick={table.firstPage} disabled={!table.getCanPreviousPage()}>
+              <Button
+                size="icon"
+                variant="outline"
+                disabled={!table.getCanPreviousPage()}
+                onClick={table.firstPage}
+                onMouseEnter={() => prefetchPage(0)}
+                onFocus={() => prefetchPage(0)}
+              >
                 <ChevronsLeft />
               </Button>
-              <Button size="icon" variant="outline" onClick={table.previousPage} disabled={!table.getCanPreviousPage()}>
+              <Button
+                size="icon"
+                variant="outline"
+                disabled={!table.getCanPreviousPage()}
+                onClick={table.previousPage}
+                onMouseEnter={() => prefetchPage(currentPageIndex - 1)}
+                onFocus={() => prefetchPage(currentPageIndex - 1)}
+              >
                 <ChevronLeft />
               </Button>
-              <Button size="icon" variant="outline" onClick={table.nextPage} disabled={!table.getCanNextPage()}>
+              <Button
+                size="icon"
+                variant="outline"
+                disabled={!table.getCanNextPage()}
+                onClick={table.nextPage}
+                onMouseEnter={() => prefetchPage(currentPageIndex + 1)}
+                onFocus={() => prefetchPage(currentPageIndex + 1)}
+              >
                 <ChevronRight />
               </Button>
-              <Button size="icon" variant="outline" onClick={table.lastPage} disabled={!table.getCanNextPage()}>
+              <Button
+                size="icon"
+                variant="outline"
+                disabled={!table.getCanNextPage()}
+                onClick={table.lastPage}
+                onMouseEnter={() => prefetchPage(table.getPageCount() - 1)}
+                onFocus={() => prefetchPage(table.getPageCount() - 1)}
+              >
                 <ChevronsRight />
               </Button>
             </div>
