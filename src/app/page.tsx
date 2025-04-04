@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { keepPreviousData, useQuery, useQueryClient, type QueryFunction } from "@tanstack/react-query"
-import { useCallback, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { store } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { useLocalStorageState } from "@/hooks/use-local-storage-state"
@@ -474,6 +474,11 @@ function IssueTable({
 
   const currentPageIndex = table.getState().pagination.pageIndex
 
+  // always prefetch the next page
+  useEffect(() => {
+    prefetchPage(currentPageIndex + 1)
+  }, [currentPageIndex, prefetchPage])
+
   return (
     <Table className="relative h-full grid grid-rows-[auto_1fr_auto] overflow-scroll overscroll-none border-t border-separate border-spacing-0">
       <TableHeader className="sticky top-0 z-2 border-b">
@@ -562,8 +567,6 @@ function IssueTable({
                 variant="outline"
                 disabled={!table.getCanNextPage()}
                 onClick={table.nextPage}
-                onMouseEnter={() => prefetchPage(currentPageIndex + 1)}
-                onFocus={() => prefetchPage(currentPageIndex + 1)}
               >
                 <ChevronRight />
               </Button>
