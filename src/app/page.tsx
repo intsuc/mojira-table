@@ -367,11 +367,6 @@ export default function Page() {
 
   const [activeIssue, setActiveIssue] = useState<JqlSearchResponse["issues"][number] | undefined>(undefined)
 
-  const handleClickIssue = (issue: JqlSearchResponse["issues"][number]) => {
-    setActiveIssue(issue)
-    window.history.replaceState(null, "", `/issue/${issue.key}`,)
-  }
-
   return (
     <SidebarProvider className="h-full overflow-hidden">
       <Sidebar>
@@ -434,7 +429,10 @@ export default function Page() {
 
         <IssueTable
           table={table}
-          onClickIssue={handleClickIssue}
+          onClickIssue={(issue) => {
+            setActiveIssue(issue)
+            window.history.replaceState(null, "", `/issue/${issue.key}`,)
+          }}
         />
       </div>
 
@@ -527,16 +525,16 @@ function IssueTable({
               {table.getPageCount()}
             </div>
             <div className="flex gap-2">
-              <Button size="icon" variant="outline" onClick={() => table.firstPage()} disabled={!table.getCanPreviousPage()}>
+              <Button size="icon" variant="outline" onClick={table.firstPage} disabled={!table.getCanPreviousPage()}>
                 <ChevronsLeft />
               </Button>
-              <Button size="icon" variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+              <Button size="icon" variant="outline" onClick={table.previousPage} disabled={!table.getCanPreviousPage()}>
                 <ChevronLeft />
               </Button>
-              <Button size="icon" variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+              <Button size="icon" variant="outline" onClick={table.nextPage} disabled={!table.getCanNextPage()}>
                 <ChevronRight />
               </Button>
-              <Button size="icon" variant="outline" onClick={() => table.lastPage()} disabled={!table.getCanNextPage()}>
+              <Button size="icon" variant="outline" onClick={table.lastPage} disabled={!table.getCanNextPage()}>
                 <ChevronsRight />
               </Button>
             </div>
