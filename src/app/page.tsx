@@ -2,7 +2,6 @@
 
 import { jqlSearchPost, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
 import { type Table as ReactTable, type Column, type ColumnDef, type ColumnFiltersState, ColumnPinningState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type PaginationState, type RowData, type SortingState, useReactTable, VisibilityState } from "@tanstack/react-table"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
@@ -15,10 +14,8 @@ import { store } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { useLocalStorageState } from "@/hooks/use-local-storage-state"
 import { buildQuery } from "@/lib/jql"
-import { DataTableColumnHeader } from "@/components/data-table-column-header"
 import { DataTableViewOptions } from "@/components/data-table-view-options"
 import Image from "next/image"
-import { useIsMounted } from "@/hooks/use-mounted"
 import { useStore } from "@tanstack/react-store"
 import type { BundledLanguage } from "shiki"
 import Link from "next/link"
@@ -27,6 +24,10 @@ import { Issue } from "@/components/issue"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarProvider, SidebarRail } from "@/components/ui/sidebar"
+import dynamic from "next/dynamic"
+
+const ThemeToggle = dynamic(() => import("@/components/theme-toggle"), { ssr: false })
+const DataTableColumnHeader = dynamic(() => import("@/components/data-table-column-header"), { ssr: false })
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-object-type
@@ -71,8 +72,6 @@ const queryFn: QueryFunction<QueryResult, QueryKey, number> = async ({
 }
 
 export default function Page() {
-  const isMounted = useIsMounted()
-
   const [project, setProject] = useLocalStorageState<JqlSearchRequest["project"]>("project", "MC", (x) => x, (x) => x as JqlSearchRequest["project"])
   const [sorting, setSorting] = useLocalStorageState<SortingState>("sorting", [])
   const [columnFilters, setColumnFilters] = useLocalStorageState<ColumnFiltersState>("columnFilters", [])
@@ -98,7 +97,6 @@ export default function Page() {
     data,
     isFetching,
   } = useQuery({
-    enabled: isMounted,
     queryKey,
     queryFn,
     placeholderData: keepPreviousData,
@@ -397,7 +395,9 @@ export default function Page() {
           <SidebarGroup />
           <SidebarGroup />
         </SidebarContent>
-        <SidebarFooter />
+        <SidebarFooter>
+          <ThemeToggle />
+        </SidebarFooter>
         <SidebarRail />
       </Sidebar>
       <div className="w-full h-full grid grid-flow-col grid-rows-[auto_auto_1fr]">
@@ -421,7 +421,6 @@ export default function Page() {
             className="min-w-[300px]"
           />
           <DataTableViewOptions table={table} />
-          <ThemeToggle />
         </div>
 
         <div className="relative h-0.5">

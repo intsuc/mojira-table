@@ -1,3 +1,5 @@
+"use client"
+
 import { Column } from "@tanstack/react-table"
 import { ArrowDown, ArrowDown01, ArrowDown10, EyeOff, PanelLeftClose, PanelRightClose, PinOff } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -7,10 +9,11 @@ interface DataTableColumnHeaderProps<TData, TValue> extends React.HTMLAttributes
   column: Column<TData, TValue>
 }
 
-export function DataTableColumnHeader<TData, TValue>({
+export default function DataTableColumnHeader({
   column,
   className,
-}: DataTableColumnHeaderProps<TData, TValue>) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+}: DataTableColumnHeaderProps<any, unknown>) {
   const title = column.columnDef.meta?.title ?? column.id
 
   if (!column.getCanSort()) {

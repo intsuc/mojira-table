@@ -1,11 +1,9 @@
 import { Moon, Sun } from "lucide-react"
 import { Button } from "./ui/button"
 import { useTheme } from "next-themes"
-import { useIsMounted } from "@/hooks/use-mounted"
 
-export function ThemeToggle() {
+export default function ThemeToggle() {
   const { theme, setTheme } = useTheme()
-  const isMounted = useIsMounted()
 
   return (
     <Button
@@ -13,9 +11,7 @@ export function ThemeToggle() {
       size="icon"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
     >
-      {isMounted ? (
-        theme === "dark" ? <Moon /> : <Sun />
-      ) : null}
+      {theme === "dark" ? <Moon /> : <Sun />}
     </Button>
   )
 }
