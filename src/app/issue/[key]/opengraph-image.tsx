@@ -12,13 +12,27 @@ export const size = {
 
 export const contentType = "image/png"
 
+const [
+  interRegular,
+  interBold,
+] = await Promise.all([
+  readFile(join(process.cwd(), "assets/Inter_28pt-Regular.ttf")),
+  readFile(join(process.cwd(), "assets/Inter_28pt-Bold.ttf")),
+])
+
 const options: ImageResponseOptions = {
   ...size,
   fonts: [
     {
       name: "Inter",
-      data: await readFile(join(process.cwd(), "assets/Inter_28pt-Regular.ttf")),
+      data: interRegular,
       weight: 400,
+      style: "normal",
+    },
+    {
+      name: "Inter",
+      data: interBold,
+      weight: 700,
       style: "normal",
     },
   ],
@@ -32,9 +46,9 @@ export default async function Image({
 
   return new ImageResponse(
     (
-      <div tw="p-16 flex flex-col w-full h-full bg-white">
-        <div tw="mb-4">{issue.key}</div>
-        <div tw="text-4xl font-bold">{issue.fields.summary}</div>
+      <div tw="p-20 flex flex-col w-full h-full bg-white">
+        <div tw="mb-4 text-2xl">{issue.key}</div>
+        <div tw="text-7xl font-bold">{issue.fields.summary}</div>
       </div>
     ),
     options,
