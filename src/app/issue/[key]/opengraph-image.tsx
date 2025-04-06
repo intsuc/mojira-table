@@ -1,6 +1,9 @@
 import { ImageResponse } from "next/og"
 import { jqlSearchPostSingle, ParamsSchema, type Props } from "./common"
 import * as v from "valibot"
+import { readFile } from "node:fs/promises"
+import { join } from "node:path"
+import type { ImageResponseOptions } from "next/server"
 
 export const size = {
   width: 1200,
@@ -8,6 +11,18 @@ export const size = {
 }
 
 export const contentType = "image/png"
+
+const options: ImageResponseOptions = {
+  ...size,
+  fonts: [
+    {
+      name: "Inter",
+      data: await readFile(join(process.cwd(), "assets/Inter_28pt-Regular.ttf")),
+      weight: 400,
+      style: "normal",
+    },
+  ],
+}
 
 export default async function Image({
   params,
@@ -22,8 +37,6 @@ export default async function Image({
         <div tw="text-4xl font-bold">{issue.fields.summary}</div>
       </div>
     ),
-    {
-      ...size,
-    },
+    options,
   );
 }
