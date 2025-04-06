@@ -22,7 +22,7 @@ export function Issue({
           <Link
             href={`/issue/${issue.key}`}
             target="_blank"
-            className="text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
+            className="w-fit text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
           >
             {issue.key}
           </Link>
