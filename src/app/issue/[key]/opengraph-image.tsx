@@ -56,8 +56,11 @@ export default async function Image({
       options,
     );
   } else {
-    return new Response("Invalid issue key", {
-      status: 400,
-    })
+    return new ImageResponse(
+      (
+        <div></div>
+      ),
+      size,
+    )
   }
 }
