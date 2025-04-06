@@ -41,16 +41,21 @@ const options: ImageResponseOptions = {
 export default async function Image({
   params,
 }: Props) {
-  const { key } = v.parse(ParamsSchema, await params)
-  const issue = await jqlSearchPostSingle(key)
+  const result = v.safeParse(ParamsSchema, await params)
+  if (result.success) {
+    const { key } = result.output
+    const issue = await jqlSearchPostSingle(key)
 
-  return new ImageResponse(
-    (
-      <div tw="p-20 flex flex-col w-full h-full bg-white">
-        <div tw="mb-4 text-2xl">{issue.key}</div>
-        <div tw="text-7xl font-bold">{issue.fields.summary}</div>
-      </div>
-    ),
-    options,
-  );
+    return new ImageResponse(
+      (
+        <div tw="p-20 flex flex-col w-full h-full bg-white">
+          <div tw="mb-4 text-2xl">{issue.key}</div>
+          <div tw="text-7xl font-bold">{issue.fields.summary}</div>
+        </div>
+      ),
+      options,
+    );
+  } else {
+    return ImageResponse.error()
+  }
 }
