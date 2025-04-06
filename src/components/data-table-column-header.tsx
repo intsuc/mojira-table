@@ -9,7 +9,7 @@ interface DataTableColumnHeaderProps<TData, TValue> extends React.HTMLAttributes
   column: Column<TData, TValue>
 }
 
-export default function DataTableColumnHeader({
+export function DataTableColumnHeader({
   column,
   className,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
