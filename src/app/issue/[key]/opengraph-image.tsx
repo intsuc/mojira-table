@@ -49,7 +49,7 @@ export default async function Image({
     return new ImageResponse(
       (
         <div tw="p-20 flex flex-col w-full h-full bg-white">
-          <div tw="mb-4 text-2xl">{issue.key}</div>
+          <div tw="mb-4 text-2xl text-zinc-600">{issue.key}</div>
           <div tw="text-7xl font-bold">{issue.fields.summary}</div>
         </div>
       ),
