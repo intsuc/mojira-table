@@ -17,7 +17,7 @@ const options: ImageResponseOptions = {
   fonts: [
     {
       name: "Inter",
-      data: await readFile(join(process.cwd(), "assets/Inter_28pt-Regular.ttf")),
+      data: await readFile(join(process.cwd(), "public/Inter_28pt-Regular.ttf")),
       weight: 400,
       style: "normal",
     },
