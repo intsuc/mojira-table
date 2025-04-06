@@ -1,26 +1,12 @@
 import { Issue } from "@/components/issue"
-import { jqlSearchPostUrl, type JqlSearchRequest, type JqlSearchResponse, type projects } from "@/lib/api"
 import type { Metadata } from "next"
 import * as v from "valibot"
 import { codeToHtml, type BundledLanguage } from "shiki"
+import { jqlSearchPostSingle, ParamsSchema, type Props } from "./common"
 
 export const revalidate = 900
 
 export const dynamic = "force-static"
-
-type Key = `${typeof projects[number]["id"]}-${number}`
-
-function isValidKey(key: unknown): key is Key {
-  return typeof key === "string" && /^(?:MC|MCPE|REALMS|MCL|BDS|WEB)-\d+$/.test(key)
-}
-
-const ParamsSchema = v.object({
-  key: v.custom<Key>(isValidKey),
-})
-
-type Props = {
-  params: Promise<v.InferInput<typeof ParamsSchema>>,
-}
 
 export async function generateMetadata(
   { params }: Props,
@@ -29,31 +15,6 @@ export async function generateMetadata(
 
   return {
     title: key,
-  }
-}
-
-async function jqlSearchPostSingle(key: Key): Promise<JqlSearchResponse> {
-  "use cache"
-
-  const project = key.split("-")[0]
-  const response = await fetch(jqlSearchPostUrl, {
-    method: "POST",
-    headers: {
-      "Accept": "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      project: project as JqlSearchRequest["project"],
-      advanced: true,
-      search: `key = ${key}`,
-      startAt: 0,
-      maxResults: 1,
-    }),
-  })
-  if (response.ok) {
-    return response.json() as Promise<JqlSearchResponse>
-  } else {
-    throw new Error(response.statusText)
   }
 }
 
@@ -66,14 +27,11 @@ export default async function Page({
   if (result.success) {
     const { key } = result.output
     try {
-      const { issues } = await jqlSearchPostSingle(key)
-      const issue = issues[0]
+      const issue = await jqlSearchPostSingle(key)
 
       return (
         <div className="p-8">
-          {issue !== undefined ? (
-            <Issue issue={issue} CodeBlockComponent={CodeBlock} />
-          ) : null}
+          <Issue issue={issue} CodeBlockComponent={CodeBlock} />
         </div>
       )
     } catch (_) {
