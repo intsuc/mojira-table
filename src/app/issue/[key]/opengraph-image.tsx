@@ -3,7 +3,7 @@ import { jqlSearchPostSingle, ParamsSchema, type Props } from "./common"
 import * as v from "valibot"
 import { readFile } from "node:fs/promises"
 import { join } from "node:path"
-import { NextResponse, type ImageResponseOptions } from "next/server"
+import { type ImageResponseOptions } from "next/server"
 
 export const size = {
   width: 1200,
