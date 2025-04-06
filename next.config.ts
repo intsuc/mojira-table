@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
       { hostname: "mojira.atlassian.net" },
     ],
   },
+  outputFileTracingIncludes: {
+    "/issue/\\[key\\]": ["./assets/*"],
+  },
   experimental: {
     useCache: true,
   },
