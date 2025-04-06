@@ -11,10 +11,17 @@ export const dynamic = "force-static"
 export async function generateMetadata(
   { params }: Props,
 ): Promise<Metadata> {
-  const { key } = await params
-
-  return {
-    title: key,
+  const result = v.safeParse(ParamsSchema, await params)
+  if (result.success) {
+    const { key } = result.output
+    const issue = await jqlSearchPostSingle(key)
+    return {
+      title: issue.fields.summary,
+    }
+  } else {
+    return {
+      title: "Issue not found",
+    }
   }
 }
 
