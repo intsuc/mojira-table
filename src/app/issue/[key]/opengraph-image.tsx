@@ -56,6 +56,6 @@ export default async function Image({
       options,
     );
   } else {
-    return ImageResponse.error()
+    return null
   }
 }
