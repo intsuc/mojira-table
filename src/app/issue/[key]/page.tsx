@@ -11,14 +11,13 @@ export const dynamic = "force-static"
 export async function generateMetadata(
   { params }: Props,
 ): Promise<Metadata> {
-  const result = v.safeParse(ParamsSchema, await params)
-  if (result.success) {
-    const { key } = result.output
+  try {
+    const { key } = v.parse(ParamsSchema, await params)
     const issue = await jqlSearchPostSingle(key)
     return {
       title: issue.fields.summary,
     }
-  } else {
+  } catch (_) {
     return {
       title: "Issue not found",
     }
@@ -30,28 +29,19 @@ export default async function Page({
 }: Props) {
   "use cache"
 
-  const result = v.safeParse(ParamsSchema, await params)
-  if (result.success) {
-    const { key } = result.output
-    try {
-      const issue = await jqlSearchPostSingle(key)
+  try {
+    const { key } = v.parse(ParamsSchema, await params)
+    const issue = await jqlSearchPostSingle(key)
 
-      return (
-        <div className="p-8">
-          <Issue issue={issue} CodeBlockComponent={CodeBlock} />
-        </div>
-      )
-    } catch (_) {
-      return (
-        <div className="p-8 h-full grid place-items-center">
-          <div className="text-2xl font-bold">Issue not found</div>
-        </div>
-      )
-    }
-  } else {
+    return (
+      <div className="p-8">
+        <Issue issue={issue} CodeBlockComponent={CodeBlock} />
+      </div>
+    )
+  } catch (_) {
     return (
       <div className="p-8 h-full grid place-items-center">
-        <div className="text-2xl font-bold">Invalid issue key</div>
+        <div className="text-2xl font-bold">Issue not found</div>
       </div>
     )
   }

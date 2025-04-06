@@ -41,9 +41,8 @@ const options: ImageResponseOptions = {
 export default async function Image({
   params,
 }: Props) {
-  const result = v.safeParse(ParamsSchema, await params)
-  if (result.success) {
-    const { key } = result.output
+  try {
+    const { key } = v.parse(ParamsSchema, await params)
     const issue = await jqlSearchPostSingle(key)
 
     return new ImageResponse(
@@ -55,7 +54,7 @@ export default async function Image({
       ),
       options,
     );
-  } else {
+  } catch (_) {
     return new ImageResponse(
       (
         <div></div>
