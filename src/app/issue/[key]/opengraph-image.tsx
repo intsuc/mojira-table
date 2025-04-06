@@ -3,7 +3,7 @@ import { jqlSearchPostSingle, ParamsSchema, type Props } from "./common"
 import * as v from "valibot"
 import { readFile } from "node:fs/promises"
 import { join } from "node:path"
-import type { ImageResponseOptions } from "next/server"
+import { NextResponse, type ImageResponseOptions } from "next/server"
 
 export const size = {
   width: 1200,
@@ -56,6 +56,8 @@ export default async function Image({
       options,
     );
   } else {
-    return null
+    return new Response("Invalid issue key", {
+      status: 400,
+    })
   }
 }
