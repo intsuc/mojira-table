@@ -354,6 +354,15 @@ export default function App() {
 
   const [activeIssue, setActiveIssue] = useState<JqlSearchResponse["issues"][number] | undefined>(undefined)
 
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const issue = event.state.issue as JqlSearchResponse["issues"][number] | undefined
+      setActiveIssue(issue)
+    }
+    window.addEventListener("popstate", handlePopState)
+    return () => window.removeEventListener("popstate", handlePopState)
+  }, [])
+
   return (
     <SidebarProvider className="h-full overflow-hidden">
       <Sidebar>
@@ -419,7 +428,7 @@ export default function App() {
           table={table}
           onClickIssue={(issue) => {
             setActiveIssue(issue)
-            window.history.replaceState(null, "", `/issue/${issue.key}`,)
+            window.history.pushState({ issue }, "", `/issue/${issue.key}`)
           }}
           queryKey={queryKey}
         />
@@ -429,7 +438,7 @@ export default function App() {
         issue={activeIssue}
         onClose={() => {
           setActiveIssue(undefined)
-          window.history.replaceState(null, "", "/")
+          window.history.back()
         }}
       />
     </SidebarProvider>
