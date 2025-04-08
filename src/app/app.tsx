@@ -609,10 +609,10 @@ function IssueHeader({
       style={style}
       className="px-0 bg-background/95"
     >
-      <div className="h-full flex items-center justify-between hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 data-[state=open]:bg-accent transition-colors">
+      <div className="px-2 h-full flex items-center justify-between hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 data-[state=open]:bg-accent transition-colors">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="px-2 truncate">
+            <button className="truncate">
               {title}
             </button>
           </DropdownMenuTrigger>
@@ -660,7 +660,7 @@ function IssueHeader({
           <GripVertical
             {...attributes}
             {...listeners}
-            className="size-4 cursor-grab"
+            className={cn("size-4", isDragging ? "cursor-grabbing" : "cursor-grab")}
           />
         </div>
       </div>
