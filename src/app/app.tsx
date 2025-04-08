@@ -324,7 +324,7 @@ export default function App() {
     placeholderData: keepPreviousData,
     retry: false,
   })
-  const issues = data?.issues ?? []
+  const issues = useMemo(() => data?.issues ?? [], [data?.issues])
 
   const table = useReactTable({
     data: issues,
@@ -445,8 +445,6 @@ export default function App() {
   )
 }
 
-const modifiers = [restrictToHorizontalAxis]
-
 function IssueTable({
   table,
   queryKey,
@@ -496,7 +494,7 @@ function IssueTable({
   return (
     <DndContext
       collisionDetection={closestCenter}
-      modifiers={modifiers}
+      modifiers={[restrictToHorizontalAxis]}
       onDragEnd={handleDragEnd}
       sensors={sensors}
     >
