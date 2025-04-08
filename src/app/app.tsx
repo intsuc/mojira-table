@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { keepPreviousData, useQuery, useQueryClient, type QueryFunction } from "@tanstack/react-query"
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { store } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { useLocalStorageState } from "@/hooks/use-local-storage-state"
@@ -45,7 +45,7 @@ declare module "@tanstack/react-table" {
 }
 
 type QueryKey = readonly [
-  "issues",
+  issues: "issues",
   project: JqlSearchRequest["project"],
   searchQuery: string,
   pagination: PaginationState,
@@ -75,6 +75,8 @@ const queryFn: QueryFunction<QueryResult, QueryKey, number> = async ({
 }
 
 export default function App() {
+  "use no memo"
+
   const columns: ColumnDef<JqlSearchResponse["issues"][number]>[] = useMemo(() => [
     {
       id: "issuetype",
@@ -445,6 +447,8 @@ function IssueTable({
   queryKey: QueryKey,
   onClickIssue: (issue: JqlSearchResponse["issues"][number]) => void,
 }) {
+  "use no memo"
+
   const queryClient = useQueryClient()
 
   const prefetchPage = useCallback((pageIndex: number) => {
@@ -572,7 +576,7 @@ function IssueTable({
   )
 }
 
-const IssueHeader = memo(function IssueHeader({
+function IssueHeader({
   header,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -655,9 +659,9 @@ const IssueHeader = memo(function IssueHeader({
       </div>
     </TableHead>
   )
-})
+}
 
-const IssueCell = memo(function IssueCell({
+function IssueCell({
   cell,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -685,7 +689,7 @@ const IssueCell = memo(function IssueCell({
       {flexRender(cell.column.columnDef.cell, cell.getContext())}
     </TableCell>
   )
-})
+}
 
 function getColumnStyles(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
