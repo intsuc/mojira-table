@@ -469,11 +469,6 @@ function IssueTable({
 
   const currentPageIndex = table.getState().pagination.pageIndex
 
-  // always prefetch the next page
-  useEffect(() => {
-    prefetchPage(currentPageIndex + 1)
-  }, [currentPageIndex, prefetchPage])
-
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event
     if (active && over && active.id !== over.id) {
@@ -560,6 +555,8 @@ function IssueTable({
                     variant="outline"
                     disabled={!table.getCanNextPage()}
                     onClick={table.nextPage}
+                    onMouseEnter={() => prefetchPage(currentPageIndex + 1)}
+                    onFocus={() => prefetchPage(currentPageIndex + 1)}
                   >
                     <ChevronRight />
                   </Button>
