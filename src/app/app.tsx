@@ -79,16 +79,16 @@ export default function App() {
 
   const columns: ColumnDef<JqlSearchResponse["issues"][number]>[] = useMemo(() => [
     {
-      id: "issuetype",
-      meta: { title: "Issue Type" },
-      accessorFn: (row) => row.fields.issuetype,
-      size: 85,
+      id: "status",
+      meta: { title: "Status" },
+      accessorFn: (row) => row.fields.status,
+      size: 105,
       cell: ({ getValue }) => {
-        const issuetype = getValue<JqlSearchResponse["issues"][number]["fields"]["issuetype"]>()
+        const status = getValue<JqlSearchResponse["issues"][number]["fields"]["status"]>()
         return (
           <div className="flex flex-row items-center gap-1">
-            <Image src={issuetype.iconUrl} alt={issuetype.name} width={0} height={0} className="size-5" unoptimized />
-            <div title={issuetype.description}>{issuetype.name}</div>
+            <Image src={status.iconUrl} alt={status.name} width={0} height={0} className="size-4" />
+            <div title={status.description}>{status.name}</div>
           </div>
         )
       }
@@ -142,21 +142,6 @@ export default function App() {
       }
     },
     {
-      id: "status",
-      meta: { title: "Status" },
-      accessorFn: (row) => row.fields.status,
-      size: 105,
-      cell: ({ getValue }) => {
-        const status = getValue<JqlSearchResponse["issues"][number]["fields"]["status"]>()
-        return (
-          <div className="flex flex-row items-center gap-1">
-            <Image src={status.iconUrl} alt={status.name} width={0} height={0} className="size-4" />
-            <div title={status.description}>{status.name}</div>
-          </div>
-        )
-      }
-    },
-    {
       id: "affectedVersion",
       meta: { title: "Affects Versions" },
       accessorFn: (row) => row.fields.versions,
@@ -173,16 +158,16 @@ export default function App() {
       }
     },
     {
-      id: "labels",
-      meta: { title: "Labels" },
-      accessorFn: (row) => row.fields.labels,
+      id: "fixVersion",
+      meta: { title: "Fix Versions" },
+      accessorFn: (row) => row.fields.fixVersions,
       size: 140,
       cell: ({ getValue }) => {
-        const labels = getValue<string[]>()
+        const fixVersions = getValue<JqlSearchResponse["issues"][number]["fields"]["fixVersions"]>()
         return (
           <div className="flex gap-0.5 overflow-x-auto ![scrollbar-width:none]">
-            {labels.map((label) => (
-              <Badge key={label} variant="secondary">{label}</Badge>
+            {fixVersions?.map((fixVersion) => (
+              <Badge key={fixVersion.id} variant="secondary" title={fixVersion.description}>{fixVersion.name}</Badge>
             ))}
           </div>
         )
@@ -217,16 +202,20 @@ export default function App() {
       }
     },
     {
-      id: "cf[10048]",
-      meta: { title: "Game Mode" },
-      accessorFn: (row) => row.fields.customfield_10048?.value,
-      size: 100,
-    },
-    {
-      id: "cf[10051]",
-      meta: { title: "Area" },
-      accessorFn: (row) => row.fields.customfield_10051?.value,
-      size: 100,
+      id: "labels",
+      meta: { title: "Labels" },
+      accessorFn: (row) => row.fields.labels,
+      size: 140,
+      cell: ({ getValue }) => {
+        const labels = getValue<string[]>()
+        return (
+          <div className="flex gap-0.5 overflow-x-auto ![scrollbar-width:none]">
+            {labels.map((label) => (
+              <Badge key={label} variant="secondary">{label}</Badge>
+            ))}
+          </div>
+        )
+      }
     },
     {
       id: "cf[10049]",
@@ -235,32 +224,23 @@ export default function App() {
       size: 115,
     },
     {
+      id: "cf[10051]",
+      meta: { title: "Area" },
+      accessorFn: (row) => row.fields.customfield_10051?.value,
+      size: 100,
+    },
+    {
+      id: "cf[10048]",
+      meta: { title: "Game Mode" },
+      accessorFn: (row) => row.fields.customfield_10048?.value,
+      size: 100,
+    },
+    {
       id: "cf[10061]",
       meta: { title: "Operating System Version" },
       accessorFn: (row) => row.fields.customfield_10061,
       size: 100,
     },
-    {
-      id: "fixVersion",
-      meta: { title: "Fix Versions" },
-      accessorFn: (row) => row.fields.fixVersions,
-      size: 140,
-      cell: ({ getValue }) => {
-        const fixVersions = getValue<JqlSearchResponse["issues"][number]["fields"]["fixVersions"]>()
-        return (
-          <div className="flex gap-0.5 overflow-x-auto ![scrollbar-width:none]">
-            {fixVersions?.map((fixVersion) => (
-              <Badge key={fixVersion.id} variant="secondary" title={fixVersion.description}>{fixVersion.name}</Badge>
-            ))}
-          </div>
-        )
-      }
-    },
-    /*{
-      header: "Linked Issues",
-      accessorFn: (row) => row.fields.issuelinks,
-      cell: () => null, // TODO
-    },*/
     {
       id: "cf[10070]",
       meta: { title: "Votes" },
@@ -291,6 +271,11 @@ export default function App() {
       accessorFn: (row) => row.fields.customfield_10050,
       size: 100,
     },
+    /*{
+      header: "Linked Issues",
+      accessorFn: (row) => row.fields.issuelinks,
+      cell: () => null, // TODO
+    },*/
   ] satisfies ColumnDef<JqlSearchResponse["issues"][number]>[], [])
 
   const [project, setProject] = useLocalStorageState<JqlSearchRequest["project"]>("project", "MC", (x) => x, (x) => x as JqlSearchRequest["project"])
@@ -454,8 +439,6 @@ function IssueTable({
   queryKey: QueryKey,
   onClickIssue: (issue: JqlSearchResponse["issues"][number]) => void,
 }) {
-  "use no memo"
-
   const queryClient = useQueryClient()
 
   const prefetchPage = useCallback((pageIndex: number) => {
