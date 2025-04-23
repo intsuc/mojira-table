@@ -26,7 +26,7 @@ import { Issue } from "@/components/issue"
 import { Button } from "@/components/ui/button"
 import { ArrowDown, ArrowDown01, ArrowDown10, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, EyeOff, GripVertical, PanelLeftClose, PanelRightClose, PinOff } from "lucide-react"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarProvider, SidebarRail } from "@/components/ui/sidebar"
-import { DndContext, KeyboardSensor, MouseSensor, TouchSensor, closestCenter, type DragEndEvent, useSensor, useSensors } from "@dnd-kit/core"
+import { DndContext, KeyboardSensor, closestCenter, type DragEndEvent, useSensor, useSensors, PointerSensor } from "@dnd-kit/core"
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers"
 import { arrayMove, SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable"
 import { useSortable } from "@dnd-kit/sortable"
@@ -464,8 +464,7 @@ function IssueTable({
   }, [table])
 
   const sensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
+    useSensor(PointerSensor, {}),
     useSensor(KeyboardSensor, {}),
   )
 
