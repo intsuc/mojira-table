@@ -1,7 +1,7 @@
 "use client"
 
 import { jqlSearchPost, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
-import { type Table as ReactTable, type Column, type ColumnDef, type ColumnFiltersState, ColumnPinningState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type PaginationState, type RowData, type SortingState, useReactTable, VisibilityState, type Header, ColumnOrderState, type Cell } from "@tanstack/react-table"
+import { type Table as ReactTable, type Column, type ColumnDef, type ColumnFiltersState, ColumnPinningState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type PaginationState, type RowData, type SortingState, useReactTable, VisibilityState, type Header, ColumnOrderState, type Cell, type ColumnSizingState } from "@tanstack/react-table"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -287,6 +287,7 @@ export default function App() {
   const [columnVisibility, setColumnVisibility] = useLocalStorageState<VisibilityState>("columnVisibility", {})
   const [columnPinning, setColumnPinning] = useLocalStorageState<ColumnPinningState>("columnPinning", {})
   const [columnOrder, setColumnOrder] = useLocalStorageState<ColumnOrderState>("columnOrder", columns.map((column) => column.id!))
+  const [columnSizing, setColumnSizing] = useLocalStorageState<ColumnSizingState>("columnSizing", {})
   const [search, setSearch] = useLocalStorageState<JqlSearchRequest["search"]>("search", "", (x) => x, (x) => x)
 
   const [pagination, setPagination] = useState<PaginationState>({
@@ -328,6 +329,8 @@ export default function App() {
     onColumnVisibilityChange: setColumnVisibility,
     onColumnPinningChange: setColumnPinning,
     onColumnOrderChange: setColumnOrder,
+    onColumnSizingChange: setColumnSizing,
+    columnResizeMode: "onChange",
     onPaginationChange: setPagination,
     manualPagination: true,
     state: {
@@ -336,6 +339,7 @@ export default function App() {
       columnVisibility,
       columnPinning,
       columnOrder,
+      columnSizing,
       pagination,
     },
   })
@@ -476,6 +480,17 @@ function IssueTable({
     useSensor(KeyboardSensor, {}),
   )
 
+  const columnSizeVars = useMemo(() => {
+    const headers = table.getFlatHeaders()
+    const sizes: { [key: string]: number } = {}
+    for (let i = 0; i < headers.length; i++) {
+      const header = headers[i]!
+      sizes[`--col-${header.column.id}-size`] = header.column.getSize()
+    }
+    return sizes
+    // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
+  }, [table.getState().columnSizingInfo, table.getState().columnSizing])
+
   return (
     <DndContext
       collisionDetection={closestCenter}
@@ -487,7 +502,10 @@ function IssueTable({
         items={table.getState().columnOrder}
         strategy={horizontalListSortingStrategy}
       >
-        <Table className="relative h-full grid grid-rows-[auto_1fr_auto] overflow-scroll overscroll-none border-t border-separate border-spacing-0">
+        <Table
+          className="relative h-full grid grid-rows-[auto_1fr_auto] overflow-scroll overscroll-none border-t border-separate border-spacing-0"
+          style={columnSizeVars}
+        >
           <TableHeader className="sticky top-0 z-2 border-b">
             <TableRow>
               {table.getFlatHeaders().map((header) => (
@@ -596,19 +614,28 @@ function IssueHeader({
       style={style}
       className="px-0 bg-background/95"
     >
-      <div className="px-2 h-full flex items-center justify-between hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 data-[state=open]:bg-accent transition-colors">
+      <div className="relative h-full hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 data-[state=open]:bg-accent transition-colors">
         <Popover>
           <PopoverTrigger asChild>
             <button
               ref={setActivatorNodeRef}
               className={cn(
-                "w-full h-full flex items-center justify-between rounded-none m-0 px-2 hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 data-[state=open]:bg-accent transition-colors",
+                "w-full h-full flex items-center justify-between m-0 px-2",
                 isDragging && "cursor-grabbing",
               )}
               {...attributes}
               {...listeners}
             >
               <span className="truncate">{title}</span>
+              <div className="h-full flex items-center">
+                {column.getIsSorted() === "desc" ? (
+                  <ArrowDown10 className="size-4" />
+                ) : column.getIsSorted() === "asc" ? (
+                  <ArrowDown01 className="size-4" />
+                ) : (
+                  null
+                )}
+              </div>
             </button>
           </PopoverTrigger>
           <PopoverContent className="flex flex-col gap-2 w-fit">
@@ -658,15 +685,12 @@ function IssueHeader({
             </Button>
           </PopoverContent>
         </Popover>
-        <div className="h-full flex items-center">
-          {column.getIsSorted() === "desc" ? (
-            <ArrowDown10 className="size-4" />
-          ) : column.getIsSorted() === "asc" ? (
-            <ArrowDown01 className="size-4" />
-          ) : (
-            null
-          )}
-        </div>
+        <div
+          className="absolute top-0 right-0 w-1 h-[calc(infinity*1px)] bg-transparent hover:bg-blue-500 cursor-ew-resize transition-colors"
+          onDoubleClick={header.column.resetSize}
+          onMouseDown={header.getResizeHandler()}
+          onTouchStart={header.getResizeHandler()}
+        ></div>
       </div>
     </TableHead>
   )
@@ -711,7 +735,7 @@ function getColumnStyles(
   const isPinned = column.getIsPinned()
   const isLastLeftPinnedColumn = isPinned === "left" && column.getIsLastColumn("left")
   const isFirstRightPinnedColumn = isPinned === "right" && column.getIsFirstColumn("right")
-  const size = column.getSize()
+  const size = `calc(var(--col-${column.id.replace("[", "\\[").replace("]", "\\]")}-size)*1px)`
 
   return {
     borderRight: isLastLeftPinnedColumn ? "1px solid var(--border)" : undefined,
