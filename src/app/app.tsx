@@ -290,12 +290,8 @@ export default function App() {
   const [columnPinning, setColumnPinning] = useLocalStorageState<ColumnPinningState>("columnPinning", {})
   const [columnOrder, setColumnOrder] = useLocalStorageState<ColumnOrderState>("columnOrder", columns.map((column) => column.id!))
   const [columnSizing, setColumnSizing] = useLocalStorageState<ColumnSizingState>("columnSizing", {})
+  const [pagination, setPagination] = useLocalStorageState<PaginationState>("pagination", { pageIndex: 0, pageSize: 20 })
   const [search, setSearch] = useLocalStorageState<JqlSearchRequest["search"]>("search", "", (x) => x, (x) => x)
-
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 20,
-  })
 
   const searchQuery = useMemo(
     () => buildQuery(project, search, sorting, columnFilters),
@@ -722,8 +718,26 @@ function IssuePagination({
 
   return (
     <TableFooter className="w-full flex justify-end p-2 gap-4 bg-background">
-      <div className="flex gap-1 w-fit items-center justify-center text-sm">
-        <input
+      <div className="flex gap-1 w-fit items-center justify-center text-sm font-normal">
+        {/* TODO: responsiveness */}
+        <div>Show</div>
+        <Select value={table.getState().pagination.pageSize.toString()} onValueChange={(value) => {
+          const pageSize = Number(value)
+          table.setPageSize(pageSize)
+        }}>
+          <SelectTrigger className="font-medium">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {[10, 20, 30, 40, 50].map((size) => (
+              <SelectItem key={size} value={size.toString()}>
+                {size}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="text-nowrap">rows in page</div>
+        <Input
           type="number"
           value={pageIndex + 1}
           onChange={(e) => setPageIndex(Math.max(0, Math.min(Number(e.target.value) - 1, table.getPageCount() - 1)))}
@@ -734,12 +748,12 @@ function IssuePagination({
             }
           }}
           className={cn(
-            "field-sizing-content [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-right",
+            "field-sizing-content [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-right font-medium",
             currentPageIndex !== pageIndex && "text-muted-foreground"
           )}
         />
-        <div>/</div>
-        <div>{table.getPageCount()}</div>
+        <div>of</div>
+        <div className="font-medium">{table.getPageCount()}</div>
       </div>
       <div className="flex gap-2">
         <Button
