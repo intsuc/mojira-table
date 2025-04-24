@@ -721,7 +721,26 @@ function IssuePagination({
   useEffect(() => setPageIndex(currentPageIndex), [currentPageIndex])
 
   return (
-    <TableFooter className="w-full flex justify-end p-2 bg-background">
+    <TableFooter className="w-full flex justify-end p-2 gap-4 bg-background">
+      <div className="flex gap-1 w-fit items-center justify-center text-sm">
+        <input
+          type="number"
+          value={pageIndex + 1}
+          onChange={(e) => setPageIndex(Math.max(0, Math.min(Number(e.target.value) - 1, table.getPageCount() - 1)))}
+          onBlur={(e) => table.setPageIndex(Math.max(0, Math.min(Number(e.currentTarget.value) - 1, table.getPageCount() - 1)))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              table.setPageIndex(Math.max(0, Math.min(Number(e.currentTarget.value) - 1, table.getPageCount() - 1)))
+            }
+          }}
+          className={cn(
+            "field-sizing-content [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-right",
+            currentPageIndex !== pageIndex && "text-muted-foreground"
+          )}
+        />
+        <div>/</div>
+        <div>{table.getPageCount()}</div>
+      </div>
       <div className="flex gap-2">
         <Button
           size="icon"
@@ -743,25 +762,6 @@ function IssuePagination({
         >
           <ChevronLeft />
         </Button>
-        <div className="flex gap-1 w-fit items-center justify-center text-sm">
-          <input
-            type="number"
-            value={pageIndex + 1}
-            onChange={(e) => setPageIndex(Math.max(0, Math.min(Number(e.target.value) - 1, table.getPageCount() - 1)))}
-            onBlur={(e) => table.setPageIndex(Math.max(0, Math.min(Number(e.currentTarget.value) - 1, table.getPageCount() - 1)))}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                table.setPageIndex(Math.max(0, Math.min(Number(e.currentTarget.value) - 1, table.getPageCount() - 1)))
-              }
-            }}
-            className={cn(
-              "field-sizing-content [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-right",
-              currentPageIndex !== pageIndex && "text-muted-foreground"
-            )}
-          />
-          <div>/</div>
-          <div>{table.getPageCount()}</div>
-        </div>
         <Button
           size="icon"
           variant="outline"
