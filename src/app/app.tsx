@@ -23,7 +23,7 @@ import Link from "next/link"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Issue } from "@/components/issue"
 import { Button } from "@/components/ui/button"
-import { ArrowDown01, ArrowDown10, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, EyeOff, GripVertical, PanelLeftClose, PanelRightClose } from "lucide-react"
+import { ArrowDown01, ArrowDown10, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, EyeOff, PanelLeftClose, PanelRightClose } from "lucide-react"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarProvider, SidebarRail } from "@/components/ui/sidebar"
 import { DndContext, KeyboardSensor, closestCenter, type DragEndEvent, useSensor, useSensors, PointerSensor } from "@dnd-kit/core"
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers"
@@ -467,7 +467,12 @@ function IssueTable({
   }, [table])
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {}),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, {}),
   )
 
@@ -574,7 +579,7 @@ function IssueHeader({
   const column = header.column
   const title = column.columnDef.meta?.title ?? column.id
 
-  const { attributes, isDragging, listeners, setNodeRef, transform } = useSortable({
+  const { attributes, isDragging, listeners, setNodeRef, setActivatorNodeRef, transform } = useSortable({
     id: header.column.id,
   })
   const normalizedTransform = CSS.Translate.toString(transform) ?? "translate3d(0px, 0px, 0)"
@@ -594,7 +599,15 @@ function IssueHeader({
       <div className="px-2 h-full flex items-center justify-between hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 data-[state=open]:bg-accent transition-colors">
         <Popover>
           <PopoverTrigger asChild>
-            <button className="w-full h-full flex items-center justify-between rounded-none m-0 px-2 hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 data-[state=open]:bg-accent transition-colors">
+            <button
+              ref={setActivatorNodeRef}
+              className={cn(
+                "w-full h-full flex items-center justify-between rounded-none m-0 px-2 hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 data-[state=open]:bg-accent transition-colors",
+                isDragging && "cursor-grabbing",
+              )}
+              {...attributes}
+              {...listeners}
+            >
               <span className="truncate">{title}</span>
             </button>
           </PopoverTrigger>
@@ -653,11 +666,6 @@ function IssueHeader({
           ) : (
             null
           )}
-          <GripVertical
-            {...attributes}
-            {...listeners}
-            className={cn("size-4", isDragging ? "cursor-grabbing" : "cursor-grab")}
-          />
         </div>
       </div>
     </TableHead>
