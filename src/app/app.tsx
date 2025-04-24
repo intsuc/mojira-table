@@ -416,6 +416,7 @@ export default function App() {
 
         <IssueTable
           table={table}
+          isFetching={isFetching}
           onClickIssue={(issue) => {
             setActiveIssue(issue)
             window.history.pushState({ issue }, "", `/issue/${issue.key}`)
@@ -441,9 +442,11 @@ export default function App() {
 
 function IssueTable({
   table,
+  isFetching,
   onClickIssue,
 }: {
   table: ReactTable<JqlSearchResponse["issues"][number]>,
+  isFetching: boolean,
   onClickIssue: (issue: JqlSearchResponse["issues"][number]) => void,
 }) {
   const handleDragEnd = useCallback((event: DragEndEvent) => {
@@ -503,13 +506,13 @@ function IssueTable({
           <TableBody>
             {[...Array(table.getState().pagination.pageSize).keys()].map((i) => {
               const row = rows[i]
-              if (row === undefined) {
+              if (row === undefined && isFetching) {
                 return (
-                  <TableRow key={i} className="grid group h-10 p-2 bg-background">
-                    {rows[0] === undefined ? <Skeleton /> : null}
+                  <TableRow key={i} className="grid group h-10 p-2 bg-background hover:bg-background">
+                    <Skeleton />
                   </TableRow>
                 )
-              } else {
+              } else if (row !== undefined) {
                 return (
                   <TableRow
                     key={row.id}
