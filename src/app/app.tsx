@@ -661,7 +661,7 @@ function IssueCell({
     <TableCell
       ref={setNodeRef}
       className={cn(
-        "relative truncate bg-background transition-colors",
+        "relative flex items-center truncate bg-background transition-colors",
         cell.column.getIsPinned() ? "" : "group-hover:bg-muted/50",
       )}
       style={style}
