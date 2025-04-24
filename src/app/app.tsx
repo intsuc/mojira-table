@@ -16,7 +16,6 @@ import { cn } from "@/lib/utils"
 import { useLocalStorageState } from "@/hooks/use-local-storage-state"
 import { buildQuery } from "@/lib/jql"
 import { DataTableViewOptions } from "@/components/data-table-view-options"
-import Image from "next/image"
 import { useStore } from "@tanstack/react-store"
 import type { BundledLanguage } from "shiki"
 import Link from "next/link"
@@ -90,10 +89,12 @@ export default function App() {
       cell: ({ getValue }) => {
         const status = getValue<JqlSearchResponse["issues"][number]["fields"]["status"]>()
         return (
-          <div className="flex flex-row items-center gap-1">
-            <Image src={status.iconUrl} alt={status.name} width={0} height={0} className="size-4" />
-            <div title={status.description} className="truncate">{status.name}</div>
-          </div>
+          <Badge title={status.description} className={cn(
+            "truncate w-full",
+            status.name === "Open" && "bg-sky-600",
+            status.name === "Resolved" && "bg-emerald-600",
+            status.name === "Reopened" && "bg-amber-600",
+          )}>{status.name}</Badge>
         )
       }
     },
@@ -557,7 +558,7 @@ function IssueHeader({
       key={header.id}
       ref={setNodeRef}
       style={style}
-      className="px-0 bg-background/95"
+      className="px-0 bg-background/95 border-border/50 border-r"
     >
       <div className="relative h-full hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 data-[state=open]:bg-accent transition-colors">
         <Popover>
@@ -661,7 +662,7 @@ function IssueCell({
     <TableCell
       ref={setNodeRef}
       className={cn(
-        "relative h-full truncate bg-background transition-colors",
+        "relative h-full truncate bg-background transition-colors border-border/50 border-r",
         cell.column.getIsPinned() ? "" : "group-hover:bg-muted/50",
       )}
       style={style}
