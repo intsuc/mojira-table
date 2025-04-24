@@ -92,7 +92,7 @@ export default function App() {
         return (
           <div className="flex flex-row items-center gap-1">
             <Image src={status.iconUrl} alt={status.name} width={0} height={0} className="size-4" />
-            <div title={status.description}>{status.name}</div>
+            <div title={status.description} className="truncate">{status.name}</div>
           </div>
         )
       }
@@ -130,7 +130,7 @@ export default function App() {
       size: 180,
       cell: ({ getValue }) => {
         const value = getValue<string | null>()
-        return value ? new Date(value).toLocaleString() : <div className="text-muted-foreground">Unresolved</div>
+        return value ? new Date(value).toLocaleString() : <div className="truncate text-muted-foreground">Unresolved</div>
       }
     },
     {
@@ -141,7 +141,7 @@ export default function App() {
       cell: ({ getValue }) => {
         const resolution = getValue<JqlSearchResponse["issues"][number]["fields"]["resolution"]>()
         return (
-          <div title={resolution?.description}>{resolution?.name}</div>
+          <div title={resolution?.description} className="truncate">{resolution?.name}</div>
         )
       }
     },
@@ -192,7 +192,7 @@ export default function App() {
         const categories = getValue<JqlSearchResponse["issues"][number]["fields"]["customfield_10055"]>()
         if (categories?.length === 1 && categories[0]?.value === "(Unassigned)") {
           return (
-            <div className="text-muted-foreground">(Unassigned)</div>
+            <div className="truncate text-muted-foreground">(Unassigned)</div>
           )
         } else {
           return (
@@ -250,14 +250,14 @@ export default function App() {
       meta: { title: "Votes" },
       accessorFn: (row) => row.fields.customfield_10070 ?? 0,
       size: 75,
-      cell: ({ getValue }) => <div className="w-full text-right">{getValue<number>()}</div>,
+      cell: ({ getValue }) => <div className="truncate text-right">{getValue<number>()}</div>,
     },
     {
       id: "watchers",
       meta: { title: "Watchers" },
       accessorFn: (row) => row.fields.watches.watchCount,
       size: 75,
-      cell: ({ getValue }) => <div className="w-full text-right">{getValue<number>()}</div>,
+      cell: ({ getValue }) => <div className="truncate text-right">{getValue<number>()}</div>,
     },
     {
       id: "cf[10047]",
@@ -516,7 +516,7 @@ function IssueTable({
                 return (
                   <TableRow
                     key={row.id}
-                    className="flex group h-10"
+                    className="flex items-center group h-10"
                     onClick={() => onClickIssue(row.original)}
                   >
                     {row.getVisibleCells().map(cell => (
@@ -661,7 +661,7 @@ function IssueCell({
     <TableCell
       ref={setNodeRef}
       className={cn(
-        "relative flex items-center truncate bg-background transition-colors",
+        "relative h-full truncate bg-background transition-colors",
         cell.column.getIsPinned() ? "" : "group-hover:bg-muted/50",
       )}
       style={style}
