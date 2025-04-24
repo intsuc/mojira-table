@@ -717,8 +717,8 @@ function IssuePagination({
   }, [queryClient, queryKey])
 
   const currentPageIndex = table.getState().pagination.pageIndex
-
   const [pageIndex, setPageIndex] = useState(currentPageIndex)
+  useEffect(() => setPageIndex(currentPageIndex), [currentPageIndex])
 
   return (
     <TableFooter className="w-full flex justify-end p-2 bg-background">
