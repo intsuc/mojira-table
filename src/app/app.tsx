@@ -250,14 +250,14 @@ export default function App() {
       meta: { title: "Votes" },
       accessorFn: (row) => row.fields.customfield_10070 ?? 0,
       size: 75,
-      cell: ({ getValue }) => <div className="text-right">{getValue<number>()}</div>,
+      cell: ({ getValue }) => <div className="w-full text-right">{getValue<number>()}</div>,
     },
     {
       id: "watchers",
       meta: { title: "Watchers" },
       accessorFn: (row) => row.fields.watches.watchCount,
       size: 75,
-      cell: ({ getValue }) => <div className="text-right">{getValue<number>()}</div>,
+      cell: ({ getValue }) => <div className="w-full text-right">{getValue<number>()}</div>,
     },
     {
       id: "cf[10047]",
