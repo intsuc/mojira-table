@@ -31,10 +31,6 @@ export function Issue({
       ) : null}
 
       <div className="grid grid-cols-[auto_1fr] text-sm *:odd:pr-1 *:odd:truncate *:py-1 *:border-b">
-        <div>Issue Type</div> <div className="flex flex-row items-center gap-1">
-          <Image src={issue.fields.issuetype.iconUrl} alt={issue.fields.issuetype.name} width={0} height={0} className="size-5" unoptimized />
-          <div title={issue.fields.issuetype.description}>{issue.fields.issuetype.name}</div>
-        </div>
         <div>Created</div> <div>{new Date(issue.fields.created).toLocaleString()}</div>
         <div>Updated</div> <div>{new Date(issue.fields.updated).toLocaleString()}</div>
         <div>Resolved</div> <div>{issue.fields.resolutiondate ? new Date(issue.fields.resolutiondate).toLocaleString() : null}</div>
