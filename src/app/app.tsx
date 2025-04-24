@@ -34,6 +34,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Separator } from "@/components/ui/separator"
 import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-object-type
@@ -386,7 +387,7 @@ export default function App() {
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
-      <div className="w-full h-full grid grid-flow-col grid-rows-[auto_auto_1fr]">
+      <div className="w-full h-full grid grid-flow-col grid-rows-[auto_auto_1fr_auto] overflow-x-hidden">
         <div className="col-span-2 p-2 min-h-fit flex flex-row gap-2 overflow-x-auto overflow-y-hidden">
           <Input
             defaultValue={search}
@@ -422,6 +423,10 @@ export default function App() {
             setActiveIssue(issue)
             window.history.pushState({ issue }, "", `/issue/${issue.key}`)
           }}
+        />
+
+        <IssuePagination
+          table={table}
           queryKey={queryKey}
         />
       </div>
@@ -439,26 +444,11 @@ export default function App() {
 
 function IssueTable({
   table,
-  queryKey,
   onClickIssue,
 }: {
   table: ReactTable<JqlSearchResponse["issues"][number]>,
-  queryKey: QueryKey,
   onClickIssue: (issue: JqlSearchResponse["issues"][number]) => void,
 }) {
-  const queryClient = useQueryClient()
-
-  const prefetchPage = useCallback((pageIndex: number) => {
-    const [issues, project, searchQuery, pagination] = queryKey
-    queryClient.prefetchQuery({
-      queryKey: [issues, project, searchQuery, { ...pagination, pageIndex }],
-      queryFn,
-      retry: false,
-    })
-  }, [queryClient, queryKey])
-
-  const currentPageIndex = table.getState().pagination.pageIndex
-
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event
     if (active && over && active.id !== over.id) {
@@ -491,6 +481,8 @@ function IssueTable({
     // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
   }, [table.getState().columnSizingInfo, table.getState().columnSizing])
 
+  const rows = table.getRowModel().rows
+
   return (
     <DndContext
       collisionDetection={closestCenter}
@@ -503,85 +495,38 @@ function IssueTable({
         strategy={horizontalListSortingStrategy}
       >
         <Table
-          className="relative h-full grid grid-rows-[auto_1fr_auto] overflow-scroll overscroll-none border-t border-separate border-spacing-0"
+          className="relative h-full grid grid-rows-[auto_1fr] overflow-auto overscroll-none border-t border-separate border-spacing-0 bg-muted/50"
           style={columnSizeVars}
         >
-          <TableHeader className="sticky top-0 z-2 border-b">
-            <TableRow>
-              {table.getFlatHeaders().map((header) => (
-                <IssueHeader key={header.id} header={header} />
-              ))}
-            </TableRow>
+          <TableHeader className="flex sticky top-0 z-2">
+            {table.getFlatHeaders().map((header) => (
+              <IssueHeader key={header.id} header={header} />
+            ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.map(row => {
-              return (
-                <TableRow
-                  key={row.id}
-                  onClick={() => onClickIssue(row.original)}
-                  className="group h-10"
-                >
-                  {row.getVisibleCells().map(cell => (
-                    <IssueCell key={cell.id} cell={cell} />
-                  ))}
-                </TableRow>
-              )
+            {[...Array(table.getState().pagination.pageSize).keys()].map((i) => {
+              const row = rows[i]
+              if (row === undefined) {
+                return (
+                  <TableRow key={i} className="grid group h-10 p-2 bg-background">
+                    <Skeleton />
+                  </TableRow>
+                )
+              } else {
+                return (
+                  <TableRow
+                    key={row.id}
+                    className="flex group h-10"
+                    onClick={() => onClickIssue(row.original)}
+                  >
+                    {row.getVisibleCells().map(cell => (
+                      <IssueCell key={cell.id} cell={cell} />
+                    ))}
+                  </TableRow>
+                )
+              }
             })}
           </TableBody>
-          <TableFooter className="sticky bottom-0 z-2 overflow-x-clip">
-            <TableRow className="flex w-[200%] bg-background/95 hover:!bg-background">
-              <TableCell colSpan={0} className="sticky left-full -translate-x-full flex justify-end gap-4">
-                <div className="flex gap-1 w-fit items-center justify-center text-sm">
-                  <div>Page</div>
-                  {currentPageIndex + 1}
-                  <div>of</div>
-                  {table.getPageCount()}
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    disabled={!table.getCanPreviousPage()}
-                    onClick={table.firstPage}
-                    onMouseEnter={() => prefetchPage(0)}
-                    onFocus={() => prefetchPage(0)}
-                  >
-                    <ChevronsLeft />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    disabled={!table.getCanPreviousPage()}
-                    onClick={table.previousPage}
-                    onMouseEnter={() => prefetchPage(currentPageIndex - 1)}
-                    onFocus={() => prefetchPage(currentPageIndex - 1)}
-                  >
-                    <ChevronLeft />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    disabled={!table.getCanNextPage()}
-                    onClick={table.nextPage}
-                    onMouseEnter={() => prefetchPage(currentPageIndex + 1)}
-                    onFocus={() => prefetchPage(currentPageIndex + 1)}
-                  >
-                    <ChevronRight />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    disabled={!table.getCanNextPage()}
-                    onClick={table.lastPage}
-                    onMouseEnter={() => prefetchPage(table.getPageCount() - 1)}
-                    onFocus={() => prefetchPage(table.getPageCount() - 1)}
-                  >
-                    <ChevronsRight />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          </TableFooter>
         </Table>
       </SortableContext>
     </DndContext>
@@ -686,7 +631,7 @@ function IssueHeader({
           </PopoverContent>
         </Popover>
         <div
-          className="absolute top-0 right-0 w-1 h-[calc(infinity*1px)] bg-transparent hover:bg-blue-500 cursor-ew-resize transition-colors"
+          className="absolute top-0 right-0 w-1 h-full bg-transparent hover:bg-blue-500 cursor-ew-resize transition-colors"
           onDoubleClick={header.column.resetSize}
           onMouseDown={header.getResizeHandler()}
           onTouchStart={header.getResizeHandler()}
@@ -716,7 +661,7 @@ function IssueCell({
     <TableCell
       ref={setNodeRef}
       className={cn(
-        "relative truncate border-b bg-background",
+        "relative truncate bg-background transition-colors",
         cell.column.getIsPinned() ? "" : "group-hover:bg-muted/50",
       )}
       style={style}
@@ -750,6 +695,80 @@ function getColumnStyles(
     zIndex: isDragging ? 2 : isPinned ? 1 : 0,
     transform,
   }
+}
+
+function IssuePagination({
+  table,
+  queryKey,
+}: {
+  table: ReactTable<JqlSearchResponse["issues"][number]>,
+  queryKey: QueryKey,
+}) {
+  const queryClient = useQueryClient()
+
+  const prefetchPage = useCallback((pageIndex: number) => {
+    const [issues, project, searchQuery, pagination] = queryKey
+    queryClient.prefetchQuery({
+      queryKey: [issues, project, searchQuery, { ...pagination, pageIndex }],
+      queryFn,
+      retry: false,
+    })
+  }, [queryClient, queryKey])
+
+  const currentPageIndex = table.getState().pagination.pageIndex
+
+  return (
+    <TableFooter className="w-full flex justify-end gap-4 p-2 bg-background">
+      <div className="flex gap-1 w-fit items-center justify-center text-sm">
+        <div>Page</div>
+        {currentPageIndex + 1}
+        <div>of</div>
+        {table.getPageCount()}
+      </div>
+      <div className="flex gap-2">
+        <Button
+          size="icon"
+          variant="outline"
+          disabled={!table.getCanPreviousPage()}
+          onClick={table.firstPage}
+          onMouseEnter={() => prefetchPage(0)}
+          onFocus={() => prefetchPage(0)}
+        >
+          <ChevronsLeft />
+        </Button>
+        <Button
+          size="icon"
+          variant="outline"
+          disabled={!table.getCanPreviousPage()}
+          onClick={table.previousPage}
+          onMouseEnter={() => prefetchPage(currentPageIndex - 1)}
+          onFocus={() => prefetchPage(currentPageIndex - 1)}
+        >
+          <ChevronLeft />
+        </Button>
+        <Button
+          size="icon"
+          variant="outline"
+          disabled={!table.getCanNextPage()}
+          onClick={table.nextPage}
+          onMouseEnter={() => prefetchPage(currentPageIndex + 1)}
+          onFocus={() => prefetchPage(currentPageIndex + 1)}
+        >
+          <ChevronRight />
+        </Button>
+        <Button
+          size="icon"
+          variant="outline"
+          disabled={!table.getCanNextPage()}
+          onClick={table.lastPage}
+          onMouseEnter={() => prefetchPage(table.getPageCount() - 1)}
+          onFocus={() => prefetchPage(table.getPageCount() - 1)}
+        >
+          <ChevronsRight />
+        </Button>
+      </div>
+    </TableFooter>
+  )
 }
 
 function IssueModal({
