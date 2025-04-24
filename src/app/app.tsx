@@ -6,7 +6,6 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -24,13 +23,17 @@ import Link from "next/link"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Issue } from "@/components/issue"
 import { Button } from "@/components/ui/button"
-import { ArrowDown, ArrowDown01, ArrowDown10, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, EyeOff, GripVertical, PanelLeftClose, PanelRightClose, PinOff } from "lucide-react"
+import { ArrowDown01, ArrowDown10, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, EyeOff, GripVertical, PanelLeftClose, PanelRightClose } from "lucide-react"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarProvider, SidebarRail } from "@/components/ui/sidebar"
 import { DndContext, KeyboardSensor, closestCenter, type DragEndEvent, useSensor, useSensors, PointerSensor } from "@dnd-kit/core"
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers"
 import { arrayMove, SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Separator } from "@/components/ui/separator"
+import { Label } from "@/components/ui/label"
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-object-type
@@ -589,45 +592,59 @@ function IssueHeader({
       className="px-0 bg-background/95"
     >
       <div className="px-2 h-full flex items-center justify-between hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 data-[state=open]:bg-accent transition-colors">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="truncate">
-              {title}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="w-full h-full flex items-center justify-between rounded-none m-0 px-2 hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 data-[state=open]:bg-accent transition-colors">
+              <span className="truncate">{title}</span>
             </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem onClick={() => column.clearSorting()}>
-              <ArrowDown className="h-3.5 w-3.5 text-muted-foreground/70" />
-              None
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => column.toggleSorting(false)}>
-              <ArrowDown01 className="h-3.5 w-3.5 text-muted-foreground/70" />
-              Asc
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => column.toggleSorting(true)}>
-              <ArrowDown10 className="h-3.5 w-3.5 text-muted-foreground/70" />
-              Desc
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => column.pin(false)}>
-              <PinOff className="h-3.5 w-3.5 text-muted-foreground/70" />
-              Unpin
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => column.pin("left")}>
-              <PanelLeftClose className="h-3.5 w-3.5 text-muted-foreground/70" />
-              Pin Left
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => column.pin("right")}>
-              <PanelRightClose className="h-3.5 w-3.5 text-muted-foreground/70" />
-              Pin Right
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => column.toggleVisibility(false)}>
-              <EyeOff className="h-3.5 w-3.5 text-muted-foreground/70" />
+          </PopoverTrigger>
+          <PopoverContent className="flex flex-col gap-2 w-fit">
+            <div className="flex flex-row gap-2 h-full">
+              <div className="flex flex-col">
+                <Label htmlFor="sort" className="text-sm font-medium">Sort</Label>
+                <ToggleGroup id="sort" type="single" value={column.getIsSorted() || ""} onValueChange={(value) => {
+                  switch (value) {
+                    case "": return column.clearSorting()
+                    case "asc": return column.toggleSorting(false)
+                    case "desc": return column.toggleSorting(true)
+                  }
+                }}>
+                  <ToggleGroupItem value="asc" aria-label="Sort ascending">
+                    <ArrowDown01 className="size-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="desc" aria-label="Sort descending">
+                    <ArrowDown10 className="size-4" />
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+              <div className="">
+                <Separator orientation="vertical" />
+              </div>
+              <div className="flex flex-col">
+                <Label htmlFor="pin" className="text-sm font-medium">Pin</Label>
+                <ToggleGroup id="pin" type="single" value={column.getIsPinned() || ""} onValueChange={(value) => {
+                  switch (value) {
+                    case "": return column.pin(false)
+                    case "left": return column.pin("left")
+                    case "right": return column.pin("right")
+                  }
+                }}>
+                  <ToggleGroupItem value="left" aria-label="Pin left">
+                    <PanelLeftClose className="size-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="right" aria-label="Pin right">
+                    <PanelRightClose className="size-4" />
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+            </div>
+            <Separator />
+            <Button variant="outline" onClick={() => column.toggleVisibility(false)}>
+              <EyeOff className="size-4" />
               Hide
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </Button>
+          </PopoverContent>
+        </Popover>
         <div className="h-full flex items-center">
           {column.getIsSorted() === "desc" ? (
             <ArrowDown10 className="size-4" />
