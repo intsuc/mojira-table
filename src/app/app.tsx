@@ -510,7 +510,7 @@ function IssueTable({
               if (row === undefined) {
                 return (
                   <TableRow key={i} className="grid group h-10 p-2 bg-background">
-                    <Skeleton />
+                    {rows[0] === undefined ? <Skeleton /> : null}
                   </TableRow>
                 )
               } else {
