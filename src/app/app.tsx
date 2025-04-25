@@ -78,8 +78,6 @@ const queryFn: QueryFunction<QueryResult, QueryKey, number> = async ({
 }
 
 export default function App() {
-  "use no memo"
-
   const columns: ColumnDef<JqlSearchResponse["issues"][number]>[] = useMemo(() => [
     {
       id: "status",
@@ -89,12 +87,7 @@ export default function App() {
       cell: ({ getValue }) => {
         const status = getValue<JqlSearchResponse["issues"][number]["fields"]["status"]>()
         return (
-          <Badge title={status.description} className={cn(
-            "truncate w-full",
-            status.name === "Open" && "bg-sky-600",
-            status.name === "Resolved" && "bg-emerald-600",
-            status.name === "Reopened" && "bg-amber-600",
-          )}>{status.name}</Badge>
+          <div title={status.description} className="truncate">{status.name}</div>
         )
       }
     },
