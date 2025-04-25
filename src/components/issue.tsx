@@ -1,10 +1,11 @@
-import type { JqlSearchResponse } from "@/lib/api"
+import { mojiraBugTrackerUrl, type JqlSearchResponse } from "@/lib/api"
 import { Badge } from "./ui/badge"
 import { Content } from "./content"
 import Image from "next/image"
 import Link from "next/link"
 import type { ReactNode } from "react"
 import type { BundledLanguage } from "shiki"
+import { ExternalLink } from "lucide-react"
 
 export function Issue({
   issue,
@@ -19,13 +20,23 @@ export function Issue({
     <div className="mx-auto max-w-3xl h-full grid grid-rows-[auto_1fr] gap-4">
       {!hideSummary ? (
         <div className="flex flex-col">
-          <Link
-            href={`/issue/${issue.key}`}
-            target="_blank"
-            className="w-fit text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
-          >
-            {issue.key}
-          </Link>
+          <div className="flex flex-row items-center gap-3">
+            <Link
+              href={`/issue/${issue.key}`}
+              target="_blank"
+              className="w-fit text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
+            >
+              {issue.key}
+            </Link>
+            <Link
+              href={mojiraBugTrackerUrl(issue.key)}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open in Mojira Bug Tracker"
+            >
+              <ExternalLink className="size-4 text-muted-foreground hover:text-foreground transition-colors" />
+            </Link>
+          </div>
           <div className="text-2xl font-bold">{issue.fields.summary}</div>
         </div>
       ) : null}

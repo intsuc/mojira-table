@@ -229,3 +229,7 @@ export async function jqlSearchPost(request: JqlSearchRequest, signal?: AbortSig
     throw new Error(response.statusText)
   }
 }
+
+export function mojiraBugTrackerUrl(key: string): string {
+  return `https://report.bugs.mojang.com/servicedesk/customer/portal/2/${key}`
+}

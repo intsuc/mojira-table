@@ -1,6 +1,6 @@
 "use client"
 
-import { jqlSearchPost, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
+import { jqlSearchPost, mojiraBugTrackerUrl, projects, type JqlSearchRequest, type JqlSearchResponse } from "@/lib/api"
 import { type Table as ReactTable, type Column, type ColumnDef, type ColumnFiltersState, ColumnPinningState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type PaginationState, type RowData, type SortingState, useReactTable, VisibilityState, type Header, ColumnOrderState, type Cell, type ColumnSizingState } from "@tanstack/react-table"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
@@ -22,7 +22,7 @@ import Link from "next/link"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Issue } from "@/components/issue"
 import { Button } from "@/components/ui/button"
-import { ArrowDown01, ArrowDown10, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, EyeOff, PanelLeftClose, PanelRightClose } from "lucide-react"
+import { ArrowDown01, ArrowDown10, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ExternalLink, EyeOff, PanelLeftClose, PanelRightClose } from "lucide-react"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarProvider, SidebarRail } from "@/components/ui/sidebar"
 import { DndContext, KeyboardSensor, closestCenter, type DragEndEvent, useSensor, useSensors, PointerSensor } from "@dnd-kit/core"
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers"
@@ -823,13 +823,23 @@ function IssueModal({
           <DrawerTitle>
             {issue !== undefined ? (
               <div className="h-full flex flex-col">
-                <Link
-                  href={`/issue/${issue.key}`}
-                  target="_blank"
-                  className="w-fit text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
-                >
-                  {issue.key}
-                </Link>
+                <div className="flex flex-row items-center gap-3">
+                  <Link
+                    href={`/issue/${issue.key}`}
+                    target="_blank"
+                    className="w-fit text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
+                  >
+                    {issue.key}
+                  </Link>
+                  <Link
+                    href={mojiraBugTrackerUrl(issue.key)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Open in Mojira Bug Tracker"
+                  >
+                    <ExternalLink className="size-4 text-muted-foreground hover:text-foreground transition-colors" />
+                  </Link>
+                </div>
                 <div className="text-2xl">{issue.fields.summary}</div>
               </div>
             ) : null}
@@ -853,13 +863,23 @@ function IssueModal({
           <DialogTitle>
             {issue !== undefined ? (
               <div className="h-full flex flex-col">
-                <Link
-                  href={`/issue/${issue.key}`}
-                  target="_blank"
-                  className="w-fit text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
-                >
-                  {issue.key}
-                </Link>
+                <div className="flex flex-row items-center gap-3">
+                  <Link
+                    href={`/issue/${issue.key}`}
+                    target="_blank"
+                    className="w-fit text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
+                  >
+                    {issue.key}
+                  </Link>
+                  <Link
+                    href={mojiraBugTrackerUrl(issue.key)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Open in Mojira Bug Tracker"
+                  >
+                    <ExternalLink className="size-4 text-muted-foreground hover:text-foreground transition-colors" />
+                  </Link>
+                </div>
                 <div className="text-2xl font-bold">{issue.fields.summary}</div>
               </div>
             ) : null}
