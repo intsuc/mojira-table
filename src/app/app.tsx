@@ -78,6 +78,8 @@ const queryFn: QueryFunction<QueryResult, QueryKey, number> = async ({
 }
 
 export default function App() {
+  "use no memo"
+
   const columns: ColumnDef<JqlSearchResponse["issues"][number]>[] = useMemo(() => [
     {
       id: "status",
