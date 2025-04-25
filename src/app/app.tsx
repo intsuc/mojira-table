@@ -704,6 +704,8 @@ function IssuePagination({
   table: ReactTable<JqlSearchResponse["issues"][number]>,
   queryKey: QueryKey,
 }) {
+  "use no memo"
+
   const queryClient = useQueryClient()
 
   const prefetchPage = useCallback((pageIndex: number) => {
